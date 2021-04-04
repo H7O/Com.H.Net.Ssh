@@ -3,6 +3,13 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <OutputType>Library</OutputType>
+    <Authors>Hussein Al Bayati</Authors>
+    <Copyright>Hussein Al Bayati</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/H7O/Com.H.Net.Ssh</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/H7O/Com.H.Net.Ssh</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>ssh,sftp</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
