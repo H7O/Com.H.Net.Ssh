@@ -10,6 +10,9 @@
     <RepositoryUrl>https://github.com/H7O/Com.H.Net.Ssh</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>ssh,sftp</PackageTags>
+    <Description>Wrapper to SSH.NET API by Renci. 
+Introduce minor new functionality.</Description>
+    <PackageReleaseNotes>Initial release</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
