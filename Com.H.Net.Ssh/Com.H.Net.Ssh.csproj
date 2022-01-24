@@ -11,7 +11,7 @@
     <RepositoryType>git</RepositoryType>
     <PackageTags>ssh,sftp</PackageTags>
     <Description>Wrapper to SSH.NET API by Renci. 
-Introduce minor new functionality.</Description>
+Introduces minor new functionality.</Description>
     <PackageReleaseNotes>Initial release</PackageReleaseNotes>
   </PropertyGroup>
 
