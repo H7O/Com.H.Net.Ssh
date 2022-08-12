@@ -20,11 +20,11 @@ namespace Com.H.Net.Ssh
             get
             {
                 if (c == null) c = new Renci.SshNet.SftpClient(
-                    this.ServerAddress, 
-                    this.Port, 
-                    this.UId, 
+                    this.ServerAddress,
+                    this.Port,
+                    this.UId,
                     this.Pwd);
-                
+
                 return c;
             }
         }
@@ -81,10 +81,12 @@ namespace Com.H.Net.Ssh
             }
             catch { }
 
-            using var file = File.OpenWrite(localPath);
-            this.Download(remotePath, file);
-            file.Flush();
-            file.Close();
+            using (var file = File.OpenWrite(localPath))
+            {
+                this.Download(remotePath, file);
+                file.Flush();
+                file.Close();
+            }
         }
         public void Download(string remotePath, Stream output)
         {
@@ -105,7 +107,7 @@ namespace Com.H.Net.Ssh
         }
 
 
-        public string DownloadContent(string remoteFilePath, 
+        public string DownloadContent(string remoteFilePath,
             Encoding encoding = null,
             Func<string, string> postProcess = null
             )
@@ -116,7 +118,7 @@ namespace Com.H.Net.Ssh
             {
                 using (var f = File.OpenWrite(tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.tmp")))
                     this.Download(remoteFilePath, f);
-                if (postProcess!=null)
+                if (postProcess != null)
                     tempPath = postProcess(tempPathBackup = tempPath);
                 return encoding == null ? File.ReadAllText(tempPath) : File.ReadAllText(tempPath, encoding);
             }
@@ -128,18 +130,18 @@ namespace Com.H.Net.Ssh
             {
                 try
                 {
-                    if (tempPath!=null)
+                    if (tempPath != null)
                         File.Delete(tempPath);
                 }
                 catch { }
                 try
                 {
-                    if(tempPathBackup!=null)
+                    if (tempPathBackup != null)
                         File.Delete(tempPathBackup);
                 }
                 catch { }
             }
-            
+
         }
 
 
@@ -162,16 +164,50 @@ namespace Com.H.Net.Ssh
         }
 
 
-        public void Upload(string localPath, string remotePath, Func<string, string> preProcess = null)
+        public void Upload(string localPath, string remotePath, Func<string, string> preProcess = null, bool disableAutoDisconnect =false)
         {
+            if (string.IsNullOrEmpty(localPath)) throw new ArgumentNullException(nameof(localPath));
             if (string.IsNullOrEmpty(remotePath)) throw new ArgumentNullException(nameof(remotePath));
+            if (Directory.Exists(localPath))
+            {
+                if (!localPath.EndsWith("/") && !localPath.EndsWith("\\")) localPath += "/";
+                if (!remotePath.EndsWith("/")) remotePath += "/";
+                var entries = Directory.GetFiles(localPath)
+                    .Union(Directory.GetDirectories(localPath).Select(x=>x+"/"));
+                var directoryName = Path.GetFileName(Path.GetDirectoryName(localPath));
+                var remotePathAppended = ($"{remotePath}/{directoryName}/").Replace("//", "/");
+                try
+                {
+                    foreach (var entry in entries)
+                    {
+                        var remoteFilePath = remotePathAppended + Path.GetFileName(entry);
+                        this.Upload(entry, remoteFilePath, preProcess, true);
+                    }
+                }
+                catch
+                {
+                    throw;
+                }
+                finally
+                {
+                    if (!disableAutoDisconnect)
+                        try
+                        {
+                            this.Disconnect();
+                        }
+                        catch { }
+                }
+                return;
+            }
             if (!File.Exists(localPath)) throw new Exception("Unable to access file '" + localPath + "'");
-            using var file = File.OpenRead(localPath);
-            this.Upload(file, remotePath, preProcess);
-            
+            using (var file = File.OpenRead(localPath))
+            {
+                this.Upload(file, remotePath, preProcess, disableAutoDisconnect);
+            }
+
         }
 
-        public void Upload(Stream input, string remotePath, Func<string, string> preProcess = null)
+        public void Upload(Stream input, string remotePath, Func<string, string> preProcess = null, bool disableAutoDisconnect = false)
         {
             string tempPath = null;
             string backupTempPath = null;
@@ -192,7 +228,7 @@ namespace Com.H.Net.Ssh
                         this.Client.CreateDirectory(folder_to_create);
                     }
                 }
-                if (preProcess!=null)
+                if (preProcess != null)
                 {
                     using (var temp = File.OpenWrite(tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.tmp")))
                         input.CopyTo(temp);
@@ -209,12 +245,13 @@ namespace Com.H.Net.Ssh
             {
                 try
                 {
-                    this.Disconnect();
+                    if (!disableAutoDisconnect)
+                        this.Disconnect();
                 }
                 catch { }
                 try
                 {
-                    if (tempPath!=null)
+                    if (tempPath != null)
                         File.Delete(tempPath);
                 }
                 catch { }
@@ -232,7 +269,7 @@ namespace Com.H.Net.Ssh
         {
             try
             {
-                remotePath ??= "";
+                if (string.IsNullOrWhiteSpace(remotePath)) remotePath= "";
                 this.Connect();
                 List<SFtpFileInfo> list = new List<SFtpFileInfo>();
                 foreach (var fileInfo in this.Client.ListDirectory(remotePath))

@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30804.86
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32630.192
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Com.H.Net.Ssh", "Com.H.Net.Ssh\Com.H.Net.Ssh.csproj", "{2F9D4D89-82F1-42F5-9E1A-7953220C69D6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetStandard2.0", "Com.H.Net.Ssh\NetStandard2.0.csproj", "{C68AA06A-E456-40B9-89D3-D037695245D1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{2F9D4D89-82F1-42F5-9E1A-7953220C69D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2F9D4D89-82F1-42F5-9E1A-7953220C69D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2F9D4D89-82F1-42F5-9E1A-7953220C69D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2F9D4D89-82F1-42F5-9E1A-7953220C69D6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C68AA06A-E456-40B9-89D3-D037695245D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C68AA06A-E456-40B9-89D3-D037695245D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C68AA06A-E456-40B9-89D3-D037695245D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C68AA06A-E456-40B9-89D3-D037695245D1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {5C3FE63B-4647-45FA-A4CC-BDA182B40323}
+		SolutionGuid = {3AF608BC-D33B-48F6-A130-0FF31500F47F}
 	EndGlobalSection
 EndGlobal

@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageId>Com.H.Net.Ssh</PackageId>
+    <AssemblyName>Com.H.Net.Ssh</AssemblyName>
+    <Authors>Hussein Al Bayati</Authors>
+    <Description>Wrapper to SSH.NET API by Renci. 
+Introduces minor new functionality</Description>
+    <Copyright>Hussein Al Bayati</Copyright>
+    <PackageProjectUrl>https://github.com/H7O/Com.H.Net.Ssh</PackageProjectUrl>
+    <PackageIcon>128x128.jpg</PackageIcon>
+    <PackageReadmeFile>nuget_readme.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/H7O/Com.H.Net.Ssh</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>SFTP</PackageTags>
+    <PackageReleaseNotes>.NET standard 2.0 release</PackageReleaseNotes>
+    <AssemblyVersion>2.0.0.1</AssemblyVersion>
+    <FileVersion>2.0.0.1</FileVersion>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <RootNamespace>Com.H.Net.Ssh</RootNamespace>
+    <Version>2.0.0.1</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SSH.NET" Version="2020.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="128x128.jpg">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Update="nuget_readme.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>
