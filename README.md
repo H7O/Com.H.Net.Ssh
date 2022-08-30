@@ -15,8 +15,8 @@ sFtpClient.Upload("c:/test/files_to_upload/some_file.txt",
     "remote_folder/some_file.txt");
 
 // single folder (and its subfolders) upload
-sFtpClient.Upload("c:/test/files_to_upload",
-    "remote_folder");
+sFtpClient.Upload("c:/test/files_to_upload/",
+    "remote_folder/");
 
 // upload from input stream
 sFtpClient.Upload(File.OpenRead("c:/test/files_to_upload/some_file.txt"),
