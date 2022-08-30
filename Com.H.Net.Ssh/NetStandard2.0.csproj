@@ -15,12 +15,12 @@ Introduces minor new functionality</Description>
     <RepositoryType>git</RepositoryType>
     <PackageTags>SFTP</PackageTags>
     <PackageReleaseNotes>.NET standard 2.0 release</PackageReleaseNotes>
-    <AssemblyVersion>2.0.0.1</AssemblyVersion>
-    <FileVersion>2.0.0.1</FileVersion>
+    <AssemblyVersion>2.0.0.2</AssemblyVersion>
+    <FileVersion>2.0.0.2</FileVersion>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <RootNamespace>Com.H.Net.Ssh</RootNamespace>
-    <Version>2.0.0.1</Version>
+    <Version>2.0.0.2</Version>
   </PropertyGroup>
 
   <ItemGroup>

@@ -200,6 +200,7 @@ namespace Com.H.Net.Ssh
                 return;
             }
             if (!File.Exists(localPath)) throw new Exception("Unable to access file '" + localPath + "'");
+            if (remotePath.EndsWith("/")) remotePath += Path.GetFileName(localPath);
             using (var file = File.OpenRead(localPath))
             {
                 this.Upload(file, remotePath, preProcess, disableAutoDisconnect);
