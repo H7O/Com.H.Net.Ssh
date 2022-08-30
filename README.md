@@ -13,8 +13,19 @@ Com.H.Net.Ssh.SFtpClient sFtpClient =
 // single file upload
 sFtpClient.Upload("c:/test/files_to_upload/some_file.txt", 
     "remote_folder/some_file.txt");
+
 // single folder (and its subfolders) upload
 sFtpClient.Upload("c:/test/files_to_upload",
     "remote_folder");
+
+// upload from input stream
+sFtpClient.Upload(File.OpenRead("c:/test/files_to_upload/some_file.txt"),
+    "remote_folder/some_file.txt");
+
+// download a file
+sFtpClient.Download("remote_folder/some_file.txt", "c:/test/downloaded_files/somefile.txt");
+
+// download to an output stream
+sFtpClient.Download("remote_folder/some_file.txt", File.OpenWrite("c:/test/downloaded_files/somefile.txt"));
 ```
 
