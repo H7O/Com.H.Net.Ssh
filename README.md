@@ -29,5 +29,11 @@ sFtpClient.Download("remote_folder/some_file.txt",
 // download to an output stream
 sFtpClient.Download("remote_folder/some_file.txt", 
     File.OpenWrite("c:/test/downloaded_files/somefile.txt"));
+
+// download a folder (and its subfolders)
+sFtpClient.Download("remote_folder/", 
+    "c:/test/files_to_download/");
+
+
 ```
 

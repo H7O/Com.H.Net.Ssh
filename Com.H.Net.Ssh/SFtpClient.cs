@@ -4,16 +4,21 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Com.H.Net.Ssh
 {
     /// <summary>
     /// Requires SSH.NET API Renci.SshNet.dll (https://github.com/sshnet/SSH.NET). 
-    /// local location Repo/20xx/3rd/SSH.NET/src/Renci.SshNet/bin/Release
+    /// If this library is installed via NuGet, the required Renci.SshNet.dll dependency will be automatically added to the project.
     /// </summary>
     public class SFtpClient : IDisposable
     {
+        /// <summary>
+        /// Disables automatic client disconnection after upload/download operations.
+        /// Default is false. The library will disconnect automatically after each operation.
+        /// The library auto connects before each operation.
+        /// </summary>
+        public bool DisableAutoDisconnect {get;set;} = false;
         private Renci.SshNet.SftpClient c;
         public Renci.SshNet.SftpClient Client
         {
@@ -24,20 +29,29 @@ namespace Com.H.Net.Ssh
                     this.Port,
                     this.UId,
                     this.Pwd);
-
                 return c;
             }
         }
-        private void Connect()
+        private bool AutoConnect()
         {
-            if (this.Client.IsConnected) return;
+            if (this.Client.IsConnected) return false;
             this.Client.Connect();
+            return true;
         }
-
-        private void Disconnect()
+        /// <summary>
+        /// Optional, useful only if DisableAutoDisconnect is set to true.
+        /// The default library behaviour (when DisableAutoDisconnect is false) is to disconnect automatically after each operation.
+        /// </summary>
+        public void Disconnect()
         {
-            if (!this.Client.IsConnected) return;
+            System.Console.WriteLine("Disconnecting...");
+            if (!this.Client.IsConnected) 
+            {
+                System.Console.WriteLine("Already disconnected.");
+                return;
+            }
             this.Client.Disconnect();
+            System.Console.WriteLine("Disconnected.");
         }
         public string UId { get; set; }
         public string Pwd { get; set; }
@@ -54,11 +68,15 @@ namespace Com.H.Net.Ssh
             = (serverAddress, port, uid, pwd);
 
 
-        public bool Exist(string remotePath)
+        #region Exist
+        public bool Exist(string remotePath) => this.ExistInternal(remotePath, this.DisableAutoDisconnect);
+        private bool ExistInternal(string remotePath, bool? disableAutoDisconnect)
         {
+            if (disableAutoDisconnect is null)
+                disableAutoDisconnect = this.DisableAutoDisconnect;
             try
             {
-                this.Connect();
+                this.AutoConnect();
                 return this.Client.Exists(remotePath);
             }
             catch { throw; }
@@ -66,33 +84,76 @@ namespace Com.H.Net.Ssh
             {
                 try
                 {
-                    this.Disconnect();
+                    if (disableAutoDisconnect == false)
+                        this.Disconnect();
                 }
                 catch { }
             }
         }
-        public void Download(string remotePath, string localPath)
-        {
-            if (string.IsNullOrWhiteSpace(remotePath)) throw new Exception("empty remote_path");
-            if (string.IsNullOrWhiteSpace(localPath)) throw new Exception("empty local_path");
-            try
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(localPath));
-            }
-            catch { }
+        #endregion
 
-            using (var file = File.OpenWrite(localPath))
+        
+        #region download
+
+        public void Download(string remotePath, string localPath) => this.DownloadInternal(remotePath, localPath, this.DisableAutoDisconnect);
+        private void DownloadInternal(string remotePath, 
+            string localPath,
+            bool? disableAutoDisconnect=null)
+        {
+            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
+
+            if (string.IsNullOrWhiteSpace(remotePath)) throw new Exception("empty remotePath");
+            if (string.IsNullOrWhiteSpace(localPath)) throw new Exception("empty localPath");
+            if (!Directory.Exists(Path.GetDirectoryName(localPath)))
+                Directory.CreateDirectory(Path.GetDirectoryName(localPath));
+
+            try 
             {
-                this.Download(remotePath, file);
-                file.Flush();
-                file.Close();
+				var fInfo = this.GetFileInfoInternal(remotePath, true);
+
+				if (fInfo.IsDirectory)
+				{
+					if (File.Exists(localPath))
+                        File.Delete(localPath);
+						// throw new Exception("remotePath is a directory whereas localPath is a file, cannot download a directory into a file");
+					if (!Directory.Exists(localPath))
+						Directory.CreateDirectory(localPath);
+
+					foreach (var f in this.ListFilesInternal(remotePath, true))
+						this.DownloadInternal(f.FullPath,
+							Path.Combine(localPath, f.Name), true);
+					return;
+				}
+
+				if (File.Exists(localPath)) File.Delete(localPath);
+				using (var fs = new FileStream(localPath, FileMode.Create))
+				{
+					this.DownloadInternal(remotePath, fs, true);
+					fs.Flush();
+					fs.Close();
+				}
+			}
+			catch { throw; }
+            finally
+            {
+                try
+                {
+                    if (disableAutoDisconnect == false)
+                        this.Disconnect();
+                }
+                catch { }
             }
         }
-        public void Download(string remotePath, Stream output)
+        public void Download(string remotePath, Stream localStream) => this.DownloadInternal(remotePath, localStream, this.DisableAutoDisconnect);
+        private void DownloadInternal(string remotePath, 
+            Stream output, 
+            bool? disableAutoDisconnect=null)
         {
+            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
+            
             try
             {
-                this.Connect();
+                this.AutoConnect();
                 this.Client.DownloadFile(remotePath, output);
             }
             catch { throw; }
@@ -100,24 +161,37 @@ namespace Com.H.Net.Ssh
             {
                 try
                 {
-                    this.Disconnect();
+                    if (disableAutoDisconnect == false) this.Disconnect();
                 }
                 catch { }
             }
         }
 
 
-        public string DownloadContent(string remoteFilePath,
+        public string DownloadAsString(
+            string remotePath,
             Encoding encoding = null,
             Func<string, string> postProcess = null
+        ) => 
+            this.DownloadAsStringInternal(
+                remotePath, 
+                encoding,
+                postProcess,
+                this.DisableAutoDisconnect);
+        private string DownloadAsStringInternal(
+            string remoteFilePath,
+            Encoding encoding = null,
+            Func<string, string> postProcess = null,
+            bool? disableAutoDisconnect = null
             )
         {
+            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
             string tempPath = null;
             string tempPathBackup = null;
             try
             {
                 using (var f = File.OpenWrite(tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.tmp")))
-                    this.Download(remoteFilePath, f);
+                    this.DownloadInternal(remoteFilePath, f, disableAutoDisconnect);
                 if (postProcess != null)
                     tempPath = postProcess(tempPathBackup = tempPath);
                 return encoding == null ? File.ReadAllText(tempPath) : File.ReadAllText(tempPath, encoding);
@@ -144,12 +218,16 @@ namespace Com.H.Net.Ssh
 
         }
 
-
-        public void Delete(string remotePath)
+        #endregion
+        
+        #region delete
+        public void Delete(string remotePath) => this.DeleteInternal(remotePath, this.DisableAutoDisconnect);
+        private void DeleteInternal(string remotePath, bool? disableAutoDisconnect = null)
         {
+            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
             try
             {
-                this.Connect();
+                this.AutoConnect();
                 this.Client.Delete(remotePath);
             }
             catch { throw; }
@@ -157,15 +235,30 @@ namespace Com.H.Net.Ssh
             {
                 try
                 {
-                    this.Disconnect();
+                    if (disableAutoDisconnect == false) this.Disconnect();
                 }
                 catch { }
             }
         }
+        #endregion
 
-
-        public void Upload(string localPath, string remotePath, Func<string, string> preProcess = null, bool disableAutoDisconnect =false)
+        #region upload
+        public void Upload(
+            string localPath, 
+            string remotePath,
+            Func<string, string> preProcess = null
+            ) => 
+        this.UploadInternal(
+            localPath, 
+            remotePath, 
+            preProcess,
+            this.DisableAutoDisconnect);
+        private void UploadInternal(string localPath, 
+            string remotePath, 
+            Func<string, string> preProcess = null, 
+            bool? disableAutoDisconnect=null)
         {
+            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
             if (string.IsNullOrEmpty(localPath)) throw new ArgumentNullException(nameof(localPath));
             if (string.IsNullOrEmpty(remotePath)) throw new ArgumentNullException(nameof(remotePath));
             if (Directory.Exists(localPath))
@@ -181,7 +274,7 @@ namespace Com.H.Net.Ssh
                     foreach (var entry in entries)
                     {
                         var remoteFilePath = remotePathAppended + Path.GetFileName(entry);
-                        this.Upload(entry, remoteFilePath, preProcess, true);
+                        this.UploadInternal(entry, remoteFilePath, preProcess, true);
                     }
                 }
                 catch
@@ -190,7 +283,7 @@ namespace Com.H.Net.Ssh
                 }
                 finally
                 {
-                    if (!disableAutoDisconnect)
+                    if (disableAutoDisconnect == false)
                         try
                         {
                             this.Disconnect();
@@ -203,20 +296,23 @@ namespace Com.H.Net.Ssh
             if (remotePath.EndsWith("/")) remotePath += Path.GetFileName(localPath);
             using (var file = File.OpenRead(localPath))
             {
-                this.Upload(file, remotePath, preProcess, disableAutoDisconnect);
+                this.UploadInternal(file, remotePath, preProcess, disableAutoDisconnect);
             }
 
         }
 
-        public void Upload(Stream input, string remotePath, Func<string, string> preProcess = null, bool disableAutoDisconnect = false)
+        public void Upload(Stream input, string remotePath, Func<string, string> preProcess) 
+            => this.UploadInternal(input, remotePath, preProcess, this.DisableAutoDisconnect);
+        private void UploadInternal(Stream input, string remotePath, Func<string, string> preProcess = null, bool? disableAutoDisconnect = null)
         {
+            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
             string tempPath = null;
             string backupTempPath = null;
 
             try
             {
                 if (input == null) throw new ArgumentNullException(nameof(input));
-                this.Connect();
+                this.AutoConnect();
                 var folders = Regex.Matches(remotePath, SFtpClient.FolderSplitterRegex)
                     .Cast<Match>().Select(x => x.Value)
                     .Select(x => x.Replace("\\", "/")).ToList();
@@ -246,7 +342,7 @@ namespace Com.H.Net.Ssh
             {
                 try
                 {
-                    if (!disableAutoDisconnect)
+                    if (disableAutoDisconnect == false)
                         this.Disconnect();
                 }
                 catch { }
@@ -265,15 +361,22 @@ namespace Com.H.Net.Ssh
 
             }
         }
+        #endregion
 
-        public List<SFtpFileInfo> GetFiles(string remotePath = null)
+        #region get files
+        public List<SFtpFileInfo> ListFiles(string remotePath) => this.ListFilesInternal(remotePath, this.DisableAutoDisconnect);
+        private List<SFtpFileInfo> ListFilesInternal(string remotePath = null, bool? disableAutoDisconnect = null)
         {
+            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
             try
             {
                 if (string.IsNullOrWhiteSpace(remotePath)) remotePath= "";
-                this.Connect();
+                this.AutoConnect();
                 List<SFtpFileInfo> list = new List<SFtpFileInfo>();
-                foreach (var fileInfo in this.Client.ListDirectory(remotePath))
+                foreach (var fileInfo in this.Client.ListDirectory(remotePath)
+                    .Where(x=>!(x.Name?.Equals(".") == true
+			            || x.Name?.Equals("..") == true))
+                )
                 {
                     list.Add(new SFtpFileInfo()
                     {
@@ -290,24 +393,21 @@ namespace Com.H.Net.Ssh
             {
                 try
                 {
-                    this.Disconnect();
+                    if (disableAutoDisconnect == false)
+                        this.Disconnect();
                 }
                 catch { }
             }
 
         }
 
-        public bool Exists(string remotePath)
+        public SFtpFileInfo GetFileInfo(string remotePath) => this.GetFileInfoInternal(remotePath, this.DisableAutoDisconnect);
+        private SFtpFileInfo GetFileInfoInternal(string remotePath, bool? disableAutoDisconnect = null)
         {
-            if (this.GetFile(remotePath) == null) return false;
-            return true;
-        }
-
-        public SFtpFileInfo GetFile(string remotePath)
-        {
+            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
             try
             {
-                this.Connect();
+                this.AutoConnect();
                 var fileInfo = this.Client.Get(remotePath);
                 return new SFtpFileInfo()
                 {
@@ -325,11 +425,25 @@ namespace Com.H.Net.Ssh
             {
                 try
                 {
-                    this.Disconnect();
+                    if (disableAutoDisconnect == false)
+                        this.Disconnect();
                 }
                 catch { }
             }
         }
+
+        #endregion
+
+        #region exists
+
+        public bool Exists(string remotePath) => this.ExistsInternal(remotePath, this.DisableAutoDisconnect);
+        private bool ExistsInternal(string remotePath, bool? disableAutoDisconnect = null)
+        {
+            if (this.GetFileInfoInternal(remotePath, disableAutoDisconnect) == null) return false;
+            return true;
+        }
+        #endregion
+
 
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
