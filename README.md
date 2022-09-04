@@ -1,5 +1,5 @@
 # Com.H.Net.Ssh
-Wrapper to Renci.SshNet. Introduces minor new functionality (e.g. SFTP upload a folder, etc..)
+Wrapper to Renci.SshNet. Introduces minor new functionality (e.g. SFTP upload / download folders & subfolders, etc..)
 
 ## How to install
 Best to install it via NuGet package manager [https://www.nuget.org/packages/Com.H.Net.Ssh](https://www.nuget.org/packages/Com.H.Net.Ssh)
@@ -33,7 +33,5 @@ sFtpClient.Download("remote_folder/some_file.txt",
 // download a folder (and its subfolders)
 sFtpClient.Download("remote_folder/", 
     "c:/test/files_to_download/");
-
-
 ```
 

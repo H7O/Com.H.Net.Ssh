@@ -6,7 +6,7 @@
     <AssemblyName>Com.H.Net.Ssh</AssemblyName>
     <Authors>Hussein Al Bayati</Authors>
     <Description>Wrapper to SSH.NET API by Renci. 
-Introduces minor new functionality</Description>
+Introduces minor new functionality (upload / download folders and subfolders, etc..)</Description>
     <Copyright>Hussein Al Bayati</Copyright>
     <PackageProjectUrl>https://github.com/H7O/Com.H.Net.Ssh</PackageProjectUrl>
     <PackageIcon>128x128.jpg</PackageIcon>
@@ -14,7 +14,7 @@ Introduces minor new functionality</Description>
     <RepositoryUrl>https://github.com/H7O/Com.H.Net.Ssh</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>SFTP</PackageTags>
-    <PackageReleaseNotes>.NET standard 2.0 release</PackageReleaseNotes>
+    <PackageReleaseNotes>Maintenance release</PackageReleaseNotes>
     <AssemblyVersion>2.0.0.2</AssemblyVersion>
     <FileVersion>2.0.0.2</FileVersion>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
