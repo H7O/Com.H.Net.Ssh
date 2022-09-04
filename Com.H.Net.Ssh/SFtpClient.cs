@@ -44,14 +44,9 @@ namespace Com.H.Net.Ssh
         /// </summary>
         public void Disconnect()
         {
-            System.Console.WriteLine("Disconnecting...");
             if (!this.Client.IsConnected) 
-            {
-                System.Console.WriteLine("Already disconnected.");
                 return;
-            }
             this.Client.Disconnect();
-            System.Console.WriteLine("Disconnected.");
         }
         public string UId { get; set; }
         public string Pwd { get; set; }
