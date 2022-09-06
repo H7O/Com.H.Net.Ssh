@@ -15,12 +15,12 @@ Introduces minor new functionality (upload / download folders and subfolders, et
     <RepositoryType>git</RepositoryType>
     <PackageTags>SFTP</PackageTags>
     <PackageReleaseNotes>Maintenance release</PackageReleaseNotes>
-    <AssemblyVersion>2.0.0.2</AssemblyVersion>
-    <FileVersion>2.0.0.2</FileVersion>
+    <AssemblyVersion>2.0.0.3</AssemblyVersion>
+    <FileVersion>2.0.0.3</FileVersion>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <RootNamespace>Com.H.Net.Ssh</RootNamespace>
-    <Version>2.0.0.2</Version>
+    <Version>2.0.0.3</Version>
   </PropertyGroup>
 
   <ItemGroup>

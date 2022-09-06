@@ -296,7 +296,7 @@ namespace Com.H.Net.Ssh
 
         }
 
-        public void Upload(Stream input, string remotePath, Func<string, string> preProcess) 
+        public void Upload(Stream input, string remotePath, Func<string, string> preProcess = null) 
             => this.UploadInternal(input, remotePath, preProcess, this.DisableAutoDisconnect);
         private void UploadInternal(Stream input, string remotePath, Func<string, string> preProcess = null, bool? disableAutoDisconnect = null)
         {
