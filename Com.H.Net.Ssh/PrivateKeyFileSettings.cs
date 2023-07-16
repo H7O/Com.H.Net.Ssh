@@ -7,7 +7,7 @@ namespace Com.H.Net.Ssh
     public class PrivateKeyFileSettings
     {
         public string Path { get; set; }
-        public string PassPhrase { get; set; }
+        public string Passphrase { get; set; }
 
     }
 }

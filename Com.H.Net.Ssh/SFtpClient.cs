@@ -29,7 +29,7 @@ namespace Com.H.Net.Ssh
                 {
                     if (this.PrivateKey != null)
                     {
-                        if (!string.IsNullOrEmpty(this.PrivateKey.PassPhrase))
+                        if (!string.IsNullOrEmpty(this.PrivateKey.Passphrase))
                         {
                             c = new Renci.SshNet.SftpClient(
                                 this.ServerAddress,
@@ -37,7 +37,7 @@ namespace Com.H.Net.Ssh
                                 this.UId,
                                 new PrivateKeyFile(
                                     this.PrivateKey.Path,
-                                    this.PrivateKey.PassPhrase));
+                                    this.PrivateKey.Passphrase));
                         }
                         else
                         {
