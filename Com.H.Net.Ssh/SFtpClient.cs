@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Renci.SshNet;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -24,11 +25,37 @@ namespace Com.H.Net.Ssh
         {
             get
             {
-                if (c == null) c = new Renci.SshNet.SftpClient(
-                    this.ServerAddress,
-                    this.Port,
-                    this.UId,
-                    this.Pwd);
+                if (c == null)
+                {
+                    if (this.PrivateKey != null)
+                    {
+                        if (!string.IsNullOrEmpty(this.PrivateKey.PassPhrase))
+                        {
+                            c = new Renci.SshNet.SftpClient(
+                                this.ServerAddress,
+                                this.Port,
+                                this.UId,
+                                new PrivateKeyFile(
+                                    this.PrivateKey.Path,
+                                    this.PrivateKey.PassPhrase));
+                        }
+                        else
+                        {
+                            c = new Renci.SshNet.SftpClient(
+                                this.ServerAddress,
+                                this.Port,
+                                this.UId,
+                                new PrivateKeyFile(
+                                    this.PrivateKey.Path));
+                        }
+                    }
+                    else
+                        c = new Renci.SshNet.SftpClient(
+                            this.ServerAddress,
+                            this.Port,
+                            this.UId,
+                            this.Pwd);
+                }
                 return c;
             }
         }
@@ -53,6 +80,9 @@ namespace Com.H.Net.Ssh
         public string ServerAddress { get; set; }
         public int Port { get; set; } = 22;
 
+        public PrivateKeyFileSettings PrivateKey { get; set; }
+        
+
         private const string FolderSplitterRegex = @".+?[/|\\]";
         public SFtpClient(string serverAddress, string uid, string pwd) =>
             (this.ServerAddress, this.UId, this.Pwd)
@@ -62,6 +92,14 @@ namespace Com.H.Net.Ssh
             (this.ServerAddress, this.Port, this.UId, this.Pwd)
             = (serverAddress, port, uid, pwd);
 
+        public SFtpClient(string serverAddress, string uid, PrivateKeyFileSettings privateKeyFileSettings) =>
+            (this.ServerAddress, this.UId, this.PrivateKey)
+            = (serverAddress, uid, privateKeyFileSettings);
+
+        public SFtpClient(string serverAddress, int port, string uid, PrivateKeyFileSettings privateKeyFileSettings) =>
+            (this.ServerAddress, this.Port, this.UId, this.PrivateKey)
+            = (serverAddress, port, uid, privateKeyFileSettings);
+            
 
         #region Exist
         public bool Exist(string remotePath) => this.ExistInternal(remotePath, this.DisableAutoDisconnect);

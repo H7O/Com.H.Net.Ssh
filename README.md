@@ -9,6 +9,10 @@ Here is a sample example
 ```c#
 Com.H.Net.Ssh.SFtpClient sFtpClient = 
     new Com.H.Net.Ssh.SFtpClient("server_name_or_ip", 22, "user_id", "pwd");
+// or you can use the constructor with the private key
+// new Com.H.Net.Ssh.SFtpClient("server_name_or_ip", 22, 
+//        "user_id", new PrivateKeyFile("path/to/key"));
+
 
 // single file upload
 sFtpClient.Upload("c:/test/files_to_upload/some_file.txt", 
@@ -35,3 +39,12 @@ sFtpClient.Download("remote_folder/",
     "c:/test/files_to_download/");
 ```
 
+The private key should be of a classical format (not OpenSSH format). You can convert the key using the following command:
+```bash
+ssh-keygen -p -f my_openssh_private_key.pem -m pem -P "my passphrase" -N "my passphrase" -O my_classic_private_key.pem
+```
+
+And if you don't have a passphrase, you can use the following command to convert your key:
+```bash
+ssh-keygen -p -f my_openssh_private_key.pem -m pem -P "" -N "" -O my_classic_private_key.pem
+```
