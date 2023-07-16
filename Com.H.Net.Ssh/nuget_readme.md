@@ -11,7 +11,7 @@ Here is a sample example
 ```c#
 Com.H.Net.Ssh.SFtpClient sFtpClient = 
     new Com.H.Net.Ssh.SFtpClient("server_name_or_ip", 22, "user_id", "pwd");
-// or you can use the constructor with the private key
+// or you can use the constructor with a private key instead of a password
 // new Com.H.Net.Ssh.SFtpClient("server_name_or_ip", 22, 
 //    new Com.H.Net.Ssh.PrivateKeyFileSettings()
 //    {
