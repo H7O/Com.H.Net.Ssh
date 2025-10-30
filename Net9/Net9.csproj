@@ -30,14 +30,8 @@ Includes full async/await support for .NET 8+ applications.</Description>
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="128x128.jpg">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-    <None Update="nuget_readme.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
+    <None Include="128x128.jpg" Pack="true" PackagePath="" />
+    <None Include="nuget_readme.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
 </Project>

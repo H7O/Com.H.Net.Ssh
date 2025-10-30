@@ -1,4 +1,6 @@
 # Com.H.Net.Ssh
+Wrapper to Renci.SshNet. Introduces minor new functionality (e.g. SFTP upload / download folders & subfolders, etc..)
+
 Kindly visit the project's github page for documentation [https://github.com/H7O/Com.H.Net.Ssh](https://github.com/H7O/Com.H.Net.Ssh)
 
 ## Installation
