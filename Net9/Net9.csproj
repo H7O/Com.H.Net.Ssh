@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
@@ -17,12 +17,12 @@ Includes full async/await support for .NET 8+ applications.</Description>
     <RepositoryType>git</RepositoryType>
     <PackageTags>SFTP;Async;SSH</PackageTags>
     <PackageReleaseNotes>Maintenance release.</PackageReleaseNotes>
-    <AssemblyVersion>9.0.0.0</AssemblyVersion>
-    <FileVersion>9.0.0.0</FileVersion>
+    <AssemblyVersion>9.0.0.1</AssemblyVersion>
+    <FileVersion>9.0.0.1</FileVersion>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <RootNamespace>Com.H.Net.Ssh</RootNamespace>
-    <Version>9.0.0.0</Version>
+    <Version>9.0.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

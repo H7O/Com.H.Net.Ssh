@@ -1,4 +1,4 @@
-﻿using Renci.SshNet;
+using Renci.SshNet;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -30,7 +30,7 @@ namespace Com.H.Net.Ssh
         /// Default is false. The library will disconnect automatically after each operation.
         /// The library auto connects before each operation.
         /// </summary>
-        public bool DisableAutoDisconnect {get;set;} = false;
+        public bool KeepConnectionOpen {get;set;} = false;
         
         /// <summary>
         /// Automatically closes streams passed to Upload/Download methods after the operation completes.
@@ -93,8 +93,8 @@ namespace Com.H.Net.Ssh
             return true;
         }
         /// <summary>
-        /// Optional, useful only if DisableAutoDisconnect is set to true.
-        /// The default library behaviour (when DisableAutoDisconnect is false) is to disconnect automatically after each operation.
+        /// Optional, useful only if KeepConnectionOpen is set to true.
+        /// The default library behaviour (when KeepConnectionOpen is false) is to disconnect automatically after each operation.
         /// </summary>
         public void Disconnect()
         {
@@ -129,11 +129,11 @@ namespace Com.H.Net.Ssh
             
 
         #region Exist
-        public bool Exist(string remotePath) => this.ExistInternal(remotePath, this.DisableAutoDisconnect);
-        private bool ExistInternal(string remotePath, bool? disableAutoDisconnect)
+        public bool Exist(string remotePath) => this.ExistInternal(remotePath, this.KeepConnectionOpen);
+        private bool ExistInternal(string remotePath, bool? keepConnectionOpen)
         {
-            if (disableAutoDisconnect is null)
-                disableAutoDisconnect = this.DisableAutoDisconnect;
+            if (keepConnectionOpen is null)
+                keepConnectionOpen = this.KeepConnectionOpen;
             try
             {
                 this.AutoConnect();
@@ -144,7 +144,7 @@ namespace Com.H.Net.Ssh
             {
                 try
                 {
-                    if (disableAutoDisconnect == false)
+                    if (keepConnectionOpen != true)
                         this.Disconnect();
                 }
                 catch { }
@@ -158,12 +158,12 @@ namespace Com.H.Net.Ssh
         /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains true if the file/directory exists; otherwise, false.</returns>
         public async Task<bool> ExistAsync(string remotePath, CancellationToken cancellationToken = default) 
-            => await this.ExistInternalAsync(remotePath, this.DisableAutoDisconnect, cancellationToken);
+            => await this.ExistInternalAsync(remotePath, this.KeepConnectionOpen, cancellationToken);
         
-        private async Task<bool> ExistInternalAsync(string remotePath, bool? disableAutoDisconnect, CancellationToken cancellationToken = default)
+        private async Task<bool> ExistInternalAsync(string remotePath, bool? keepConnectionOpen, CancellationToken cancellationToken = default)
         {
-            if (disableAutoDisconnect is null)
-                disableAutoDisconnect = this.DisableAutoDisconnect;
+            if (keepConnectionOpen is null)
+                keepConnectionOpen = this.KeepConnectionOpen;
             try
             {
                 await this.AutoConnectAsync(cancellationToken);
@@ -174,7 +174,7 @@ namespace Com.H.Net.Ssh
             {
                 try
                 {
-                    if (disableAutoDisconnect == false)
+                    if (keepConnectionOpen != true)
                         this.Disconnect();
                 }
                 catch { }
@@ -185,12 +185,12 @@ namespace Com.H.Net.Ssh
         
         #region download
 
-        public void Download(string remotePath, string localPath) => this.DownloadInternal(remotePath, localPath, this.DisableAutoDisconnect);
+        public void Download(string remotePath, string localPath) => this.DownloadInternal(remotePath, localPath, this.KeepConnectionOpen);
         private void DownloadInternal(string remotePath, 
             string localPath,
-            bool? disableAutoDisconnect=null)
+            bool? keepConnectionOpen=null)
         {
-            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
+            if (keepConnectionOpen is null) keepConnectionOpen = this.KeepConnectionOpen;
 
             if (string.IsNullOrWhiteSpace(remotePath)) throw new Exception("empty remotePath");
             if (string.IsNullOrWhiteSpace(localPath)) throw new Exception("empty localPath");
@@ -226,7 +226,7 @@ namespace Com.H.Net.Ssh
             {
                 try
                 {
-                    if (disableAutoDisconnect == false)
+                    if (keepConnectionOpen != true)
                         this.Disconnect();
                 }
                 catch { }
@@ -239,13 +239,13 @@ namespace Com.H.Net.Ssh
         /// <param name="localStream">Output stream to write to</param>
         /// <param name="closeStream">If true, closes the stream after download. If false, leaves it open. If null, uses the AutoCloseStreams property value.</param>
         public void Download(string remotePath, Stream localStream, bool? closeStream = null) 
-            => this.DownloadInternal(remotePath, localStream, this.DisableAutoDisconnect, closeStream);
+            => this.DownloadInternal(remotePath, localStream, this.KeepConnectionOpen, closeStream);
         private void DownloadInternal(string remotePath, 
             Stream output, 
-            bool? disableAutoDisconnect=null,
+            bool? keepConnectionOpen=null,
             bool? closeStream = null)
         {
-            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
+            if (keepConnectionOpen is null) keepConnectionOpen = this.KeepConnectionOpen;
             if (closeStream is null) closeStream = this.AutoCloseStreams ?? GlobalAutoCloseStreams;
             
             try
@@ -264,7 +264,7 @@ namespace Com.H.Net.Ssh
                 catch { }
                 try
                 {
-                    if (disableAutoDisconnect == false) this.Disconnect();
+                    if (keepConnectionOpen != true) this.Disconnect();
                 }
                 catch { }
             }
@@ -280,21 +280,21 @@ namespace Com.H.Net.Ssh
                 remotePath, 
                 encoding,
                 postProcess,
-                this.DisableAutoDisconnect);
+                this.KeepConnectionOpen);
         private string DownloadAsStringInternal(
             string remoteFilePath,
             Encoding encoding = null,
             Func<string, string> postProcess = null,
-            bool? disableAutoDisconnect = null
+            bool? keepConnectionOpen = null
             )
         {
-            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
+            if (keepConnectionOpen is null) keepConnectionOpen = this.KeepConnectionOpen;
             string tempPath = null;
             string tempPathBackup = null;
             try
             {
                 using (var f = File.OpenWrite(tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.tmp")))
-                    this.DownloadInternal(remoteFilePath, f, disableAutoDisconnect);
+                    this.DownloadInternal(remoteFilePath, f, keepConnectionOpen);
                 if (postProcess != null)
                     tempPath = postProcess(tempPathBackup = tempPath);
                 return encoding == null ? File.ReadAllText(tempPath) : File.ReadAllText(tempPath, encoding);
@@ -335,14 +335,14 @@ namespace Com.H.Net.Ssh
         /// <returns>A task that represents the asynchronous operation.</returns>
         /// <exception cref="Exception">Thrown when remotePath or localPath is empty.</exception>
         public async Task DownloadAsync(string remotePath, string localPath, CancellationToken cancellationToken = default) 
-            => await this.DownloadInternalAsync(remotePath, localPath, this.DisableAutoDisconnect, cancellationToken);
+            => await this.DownloadInternalAsync(remotePath, localPath, this.KeepConnectionOpen, cancellationToken);
         
         private async Task DownloadInternalAsync(string remotePath, 
             string localPath,
-            bool? disableAutoDisconnect = null,
+            bool? keepConnectionOpen = null,
             CancellationToken cancellationToken = default)
         {
-            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
+            if (keepConnectionOpen is null) keepConnectionOpen = this.KeepConnectionOpen;
 
             if (string.IsNullOrWhiteSpace(remotePath)) throw new Exception("empty remotePath");
             if (string.IsNullOrWhiteSpace(localPath)) throw new Exception("empty localPath");
@@ -377,7 +377,7 @@ namespace Com.H.Net.Ssh
             {
                 try
                 {
-                    if (disableAutoDisconnect == false)
+                    if (keepConnectionOpen != true)
                         this.Disconnect();
                 }
                 catch { }
@@ -393,15 +393,15 @@ namespace Com.H.Net.Ssh
         /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         public async Task DownloadAsync(string remotePath, Stream localStream, bool? closeStream = null, CancellationToken cancellationToken = default) 
-            => await this.DownloadInternalAsync(remotePath, localStream, this.DisableAutoDisconnect, closeStream, cancellationToken);
+            => await this.DownloadInternalAsync(remotePath, localStream, this.KeepConnectionOpen, closeStream, cancellationToken);
         
         private async Task DownloadInternalAsync(string remotePath, 
             Stream output, 
-            bool? disableAutoDisconnect = null,
+            bool? keepConnectionOpen = null,
             bool? closeStream = null,
             CancellationToken cancellationToken = default)
         {
-            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
+            if (keepConnectionOpen is null) keepConnectionOpen = this.KeepConnectionOpen;
             if (closeStream is null) closeStream = this.AutoCloseStreams ?? GlobalAutoCloseStreams;
             
             try
@@ -420,7 +420,7 @@ namespace Com.H.Net.Ssh
                 catch { }
                 try
                 {
-                    if (disableAutoDisconnect == false) this.Disconnect();
+                    if (keepConnectionOpen != true) this.Disconnect();
                 }
                 catch { }
             }
@@ -444,24 +444,24 @@ namespace Com.H.Net.Ssh
                 remotePath, 
                 encoding,
                 postProcess,
-                this.DisableAutoDisconnect,
+                this.KeepConnectionOpen,
                 cancellationToken);
         
         private async Task<string> DownloadAsStringInternalAsync(
             string remoteFilePath,
             Encoding encoding = null,
             Func<string, string> postProcess = null,
-            bool? disableAutoDisconnect = null,
+            bool? keepConnectionOpen = null,
             CancellationToken cancellationToken = default
             )
         {
-            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
+            if (keepConnectionOpen is null) keepConnectionOpen = this.KeepConnectionOpen;
             string tempPath = null;
             string tempPathBackup = null;
             try
             {
                 await using (var f = File.OpenWrite(tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.tmp")))
-                    await this.DownloadInternalAsync(remoteFilePath, f, disableAutoDisconnect, null, cancellationToken);
+                    await this.DownloadInternalAsync(remoteFilePath, f, keepConnectionOpen, null, cancellationToken);
                 if (postProcess != null)
                     tempPath = postProcess(tempPathBackup = tempPath);
                 return encoding == null 
@@ -493,10 +493,10 @@ namespace Com.H.Net.Ssh
         #endregion
         
         #region delete
-        public void Delete(string remotePath) => this.DeleteInternal(remotePath, this.DisableAutoDisconnect);
-        private void DeleteInternal(string remotePath, bool? disableAutoDisconnect = null)
+        public void Delete(string remotePath) => this.DeleteInternal(remotePath, this.KeepConnectionOpen);
+        private void DeleteInternal(string remotePath, bool? keepConnectionOpen = null)
         {
-            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
+            if (keepConnectionOpen is null) keepConnectionOpen = this.KeepConnectionOpen;
             try
             {
                 this.AutoConnect();
@@ -507,7 +507,7 @@ namespace Com.H.Net.Ssh
             {
                 try
                 {
-                    if (disableAutoDisconnect == false) this.Disconnect();
+                    if (keepConnectionOpen != true) this.Disconnect();
                 }
                 catch { }
             }
@@ -520,11 +520,11 @@ namespace Com.H.Net.Ssh
         /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         public async Task DeleteAsync(string remotePath, CancellationToken cancellationToken = default) 
-            => await this.DeleteInternalAsync(remotePath, this.DisableAutoDisconnect, cancellationToken);
+            => await this.DeleteInternalAsync(remotePath, this.KeepConnectionOpen, cancellationToken);
         
-        private async Task DeleteInternalAsync(string remotePath, bool? disableAutoDisconnect = null, CancellationToken cancellationToken = default)
+        private async Task DeleteInternalAsync(string remotePath, bool? keepConnectionOpen = null, CancellationToken cancellationToken = default)
         {
-            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
+            if (keepConnectionOpen is null) keepConnectionOpen = this.KeepConnectionOpen;
             try
             {
                 await this.AutoConnectAsync(cancellationToken);
@@ -535,7 +535,7 @@ namespace Com.H.Net.Ssh
             {
                 try
                 {
-                    if (disableAutoDisconnect == false) this.Disconnect();
+                    if (keepConnectionOpen != true) this.Disconnect();
                 }
                 catch { }
             }
@@ -552,13 +552,13 @@ namespace Com.H.Net.Ssh
             localPath, 
             remotePath, 
             preProcess,
-            this.DisableAutoDisconnect);
+            this.KeepConnectionOpen);
         private void UploadInternal(string localPath, 
             string remotePath, 
             Func<string, string> preProcess = null, 
-            bool? disableAutoDisconnect=null)
+            bool? keepConnectionOpen=null)
         {
-            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
+            if (keepConnectionOpen is null) keepConnectionOpen = this.KeepConnectionOpen;
             if (string.IsNullOrEmpty(localPath)) throw new ArgumentNullException(nameof(localPath));
             if (string.IsNullOrEmpty(remotePath)) throw new ArgumentNullException(nameof(remotePath));
             if (Directory.Exists(localPath))
@@ -583,7 +583,7 @@ namespace Com.H.Net.Ssh
                 }
                 finally
                 {
-                    if (disableAutoDisconnect == false)
+                    if (keepConnectionOpen != true)
                         try
                         {
                             this.Disconnect();
@@ -596,7 +596,7 @@ namespace Com.H.Net.Ssh
             if (remotePath.EndsWith("/")) remotePath += Path.GetFileName(localPath);
             using (var file = File.OpenRead(localPath))
             {
-                this.UploadInternal(file, remotePath, preProcess, disableAutoDisconnect);
+                this.UploadInternal(file, remotePath, preProcess, keepConnectionOpen);
             }
 
         }
@@ -608,10 +608,10 @@ namespace Com.H.Net.Ssh
         /// <param name="preProcess">Optional function to pre-process the file before upload. Note: If provided, the stream's position will be advanced to the end.</param>
         /// <param name="closeStream">If true, closes the stream after upload. If false, leaves it open. If null, uses the AutoCloseStreams property value.</param>
         public void Upload(Stream input, string remotePath, Func<string, string> preProcess = null, bool? closeStream = null) 
-            => this.UploadInternal(input, remotePath, preProcess, this.DisableAutoDisconnect, closeStream);
-        private void UploadInternal(Stream input, string remotePath, Func<string, string> preProcess = null, bool? disableAutoDisconnect = null, bool? closeStream = null)
+            => this.UploadInternal(input, remotePath, preProcess, this.KeepConnectionOpen, closeStream);
+        private void UploadInternal(Stream input, string remotePath, Func<string, string> preProcess = null, bool? keepConnectionOpen = null, bool? closeStream = null)
         {
-            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
+            if (keepConnectionOpen is null) keepConnectionOpen = this.KeepConnectionOpen;
             if (closeStream is null) closeStream = this.AutoCloseStreams ?? GlobalAutoCloseStreams;
             
             string tempPath = null;
@@ -657,7 +657,7 @@ namespace Com.H.Net.Ssh
                 catch { }
                 try
                 {
-                    if (disableAutoDisconnect == false)
+                    if (keepConnectionOpen != true)
                         this.Disconnect();
                 }
                 catch { }
@@ -700,16 +700,16 @@ namespace Com.H.Net.Ssh
             localPath, 
             remotePath, 
             preProcess,
-            this.DisableAutoDisconnect,
+            this.KeepConnectionOpen,
             cancellationToken);
         
         private async Task UploadInternalAsync(string localPath, 
             string remotePath, 
             Func<string, string> preProcess = null, 
-            bool? disableAutoDisconnect = null,
+            bool? keepConnectionOpen = null,
             CancellationToken cancellationToken = default)
         {
-            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
+            if (keepConnectionOpen is null) keepConnectionOpen = this.KeepConnectionOpen;
             if (string.IsNullOrEmpty(localPath)) throw new ArgumentNullException(nameof(localPath));
             if (string.IsNullOrEmpty(remotePath)) throw new ArgumentNullException(nameof(remotePath));
             if (Directory.Exists(localPath))
@@ -734,7 +734,7 @@ namespace Com.H.Net.Ssh
                 }
                 finally
                 {
-                    if (disableAutoDisconnect == false)
+                    if (keepConnectionOpen != true)
                         try
                         {
                             this.Disconnect();
@@ -747,7 +747,7 @@ namespace Com.H.Net.Ssh
             if (remotePath.EndsWith("/")) remotePath += Path.GetFileName(localPath);
             await using (var file = File.OpenRead(localPath))
             {
-                await this.UploadInternalAsync(file, remotePath, preProcess, disableAutoDisconnect, null, cancellationToken);
+                await this.UploadInternalAsync(file, remotePath, preProcess, keepConnectionOpen, null, cancellationToken);
             }
 
         }
@@ -764,11 +764,11 @@ namespace Com.H.Net.Ssh
         /// <returns>A task that represents the asynchronous operation.</returns>
         /// <exception cref="ArgumentNullException">Thrown when input stream is null.</exception>
         public async Task UploadAsync(Stream input, string remotePath, Func<string, string> preProcess = null, bool? closeStream = null, CancellationToken cancellationToken = default) 
-            => await this.UploadInternalAsync(input, remotePath, preProcess, this.DisableAutoDisconnect, closeStream, cancellationToken);
+            => await this.UploadInternalAsync(input, remotePath, preProcess, this.KeepConnectionOpen, closeStream, cancellationToken);
         
-        private async Task UploadInternalAsync(Stream input, string remotePath, Func<string, string> preProcess = null, bool? disableAutoDisconnect = null, bool? closeStream = null, CancellationToken cancellationToken = default)
+        private async Task UploadInternalAsync(Stream input, string remotePath, Func<string, string> preProcess = null, bool? keepConnectionOpen = null, bool? closeStream = null, CancellationToken cancellationToken = default)
         {
-            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
+            if (keepConnectionOpen is null) keepConnectionOpen = this.KeepConnectionOpen;
             if (closeStream is null) closeStream = this.AutoCloseStreams ?? GlobalAutoCloseStreams;
             
             string tempPath = null;
@@ -814,7 +814,7 @@ namespace Com.H.Net.Ssh
                 catch { }
                 try
                 {
-                    if (disableAutoDisconnect == false)
+                    if (keepConnectionOpen != true)
                         this.Disconnect();
                 }
                 catch { }
@@ -836,10 +836,10 @@ namespace Com.H.Net.Ssh
         #endregion
 
         #region get files
-        public List<SFtpFileInfo> ListFiles(string remotePath) => this.ListFilesInternal(remotePath, this.DisableAutoDisconnect);
-        private List<SFtpFileInfo> ListFilesInternal(string remotePath = null, bool? disableAutoDisconnect = null)
+        public List<SFtpFileInfo> ListFiles(string remotePath) => this.ListFilesInternal(remotePath, this.KeepConnectionOpen);
+        private List<SFtpFileInfo> ListFilesInternal(string remotePath = null, bool? keepConnectionOpen = null)
         {
-            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
+            if (keepConnectionOpen is null) keepConnectionOpen = this.KeepConnectionOpen;
             try
             {
                 if (string.IsNullOrWhiteSpace(remotePath)) remotePath= "";
@@ -865,7 +865,7 @@ namespace Com.H.Net.Ssh
             {
                 try
                 {
-                    if (disableAutoDisconnect == false)
+                    if (keepConnectionOpen != true)
                         this.Disconnect();
                 }
                 catch { }
@@ -873,10 +873,10 @@ namespace Com.H.Net.Ssh
 
         }
 
-        public SFtpFileInfo GetFileInfo(string remotePath) => this.GetFileInfoInternal(remotePath, this.DisableAutoDisconnect);
-        private SFtpFileInfo GetFileInfoInternal(string remotePath, bool? disableAutoDisconnect = null)
+        public SFtpFileInfo GetFileInfo(string remotePath) => this.GetFileInfoInternal(remotePath, this.KeepConnectionOpen);
+        private SFtpFileInfo GetFileInfoInternal(string remotePath, bool? keepConnectionOpen = null)
         {
-            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
+            if (keepConnectionOpen is null) keepConnectionOpen = this.KeepConnectionOpen;
             try
             {
                 this.AutoConnect();
@@ -897,7 +897,7 @@ namespace Com.H.Net.Ssh
             {
                 try
                 {
-                    if (disableAutoDisconnect == false)
+                    if (keepConnectionOpen != true)
                         this.Disconnect();
                 }
                 catch { }
@@ -918,16 +918,16 @@ namespace Com.H.Net.Ssh
         public async Task<List<SFtpFileInfo>> ListFilesAsync(string remotePath, CancellationToken cancellationToken = default)
         {
             var list = new List<SFtpFileInfo>();
-            await foreach (var file in this.ListFilesInternalAsync(remotePath, this.DisableAutoDisconnect, cancellationToken))
+            await foreach (var file in this.ListFilesInternalAsync(remotePath, this.KeepConnectionOpen, cancellationToken))
             {
                 list.Add(file);
             }
             return list;
         }
         
-        private async IAsyncEnumerable<SFtpFileInfo> ListFilesInternalAsync(string remotePath = null, bool? disableAutoDisconnect = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        private async IAsyncEnumerable<SFtpFileInfo> ListFilesInternalAsync(string remotePath = null, bool? keepConnectionOpen = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
+            if (keepConnectionOpen is null) keepConnectionOpen = this.KeepConnectionOpen;
             try
             {
                 if (string.IsNullOrWhiteSpace(remotePath)) remotePath= "";
@@ -951,7 +951,7 @@ namespace Com.H.Net.Ssh
             {
                 try
                 {
-                    if (disableAutoDisconnect == false)
+                    if (keepConnectionOpen != true)
                         this.Disconnect();
                 }
                 catch { }
@@ -965,11 +965,11 @@ namespace Com.H.Net.Ssh
         /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the file information object.</returns>
         public async Task<SFtpFileInfo> GetFileInfoAsync(string remotePath, CancellationToken cancellationToken = default) 
-            => await this.GetFileInfoInternalAsync(remotePath, this.DisableAutoDisconnect, cancellationToken);
+            => await this.GetFileInfoInternalAsync(remotePath, this.KeepConnectionOpen, cancellationToken);
         
-        private async Task<SFtpFileInfo> GetFileInfoInternalAsync(string remotePath, bool? disableAutoDisconnect = null, CancellationToken cancellationToken = default)
+        private async Task<SFtpFileInfo> GetFileInfoInternalAsync(string remotePath, bool? keepConnectionOpen = null, CancellationToken cancellationToken = default)
         {
-            if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
+            if (keepConnectionOpen is null) keepConnectionOpen = this.KeepConnectionOpen;
             try
             {
                 await this.AutoConnectAsync(cancellationToken);
@@ -990,7 +990,7 @@ namespace Com.H.Net.Ssh
             {
                 try
                 {
-                    if (disableAutoDisconnect == false)
+                    if (keepConnectionOpen != true)
                         this.Disconnect();
                 }
                 catch { }
@@ -1001,10 +1001,10 @@ namespace Com.H.Net.Ssh
 
         #region exists
 
-        public bool Exists(string remotePath) => this.ExistsInternal(remotePath, this.DisableAutoDisconnect);
-        private bool ExistsInternal(string remotePath, bool? disableAutoDisconnect = null)
+        public bool Exists(string remotePath) => this.ExistsInternal(remotePath, this.KeepConnectionOpen);
+        private bool ExistsInternal(string remotePath, bool? keepConnectionOpen = null)
         {
-            if (this.GetFileInfoInternal(remotePath, disableAutoDisconnect) == null) return false;
+            if (this.GetFileInfoInternal(remotePath, keepConnectionOpen) == null) return false;
             return true;
         }
         
@@ -1016,11 +1016,11 @@ namespace Com.H.Net.Ssh
         /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains true if the file/directory exists; otherwise, false.</returns>
         public async Task<bool> ExistsAsync(string remotePath, CancellationToken cancellationToken = default) 
-            => await this.ExistsInternalAsync(remotePath, this.DisableAutoDisconnect, cancellationToken);
+            => await this.ExistsInternalAsync(remotePath, this.KeepConnectionOpen, cancellationToken);
         
-        private async Task<bool> ExistsInternalAsync(string remotePath, bool? disableAutoDisconnect = null, CancellationToken cancellationToken = default)
+        private async Task<bool> ExistsInternalAsync(string remotePath, bool? keepConnectionOpen = null, CancellationToken cancellationToken = default)
         {
-            var fileInfo = await this.GetFileInfoInternalAsync(remotePath, disableAutoDisconnect, cancellationToken);
+            var fileInfo = await this.GetFileInfoInternalAsync(remotePath, keepConnectionOpen, cancellationToken);
             if (fileInfo == null) return false;
             return true;
         }
@@ -1068,3 +1068,7 @@ namespace Com.H.Net.Ssh
         #endregion
     }
 }
+
+
+
+

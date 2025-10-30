@@ -7,10 +7,10 @@ namespace TestAsync;
 class Program
 {
     // SFTP Connection Settings
-    private const string Server = "127.0.0.1";
-    private const int Port = 22;
-    private const string Username = "test";
-    private const string Password = "password";
+    private const string Server = "192.168.50.196";
+    private const int Port = 2222;
+    private const string Username = "t";
+    private const string Password = "123";
     
     // Test paths
     private const string RemoteTestDir = "/test_async";
