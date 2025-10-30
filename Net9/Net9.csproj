@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <PackageId>Com.H.Net.Ssh</PackageId>
+    <AssemblyName>Com.H.Net.Ssh</AssemblyName>
+    <Authors>Hussein Al Bayati</Authors>
+    <Description>Wrapper to SSH.NET API by Renci. 
+Introduces minor new functionality (upload / download folders and subfolders, etc..)
+Includes full async/await support for .NET 8+ applications.</Description>
+    <Copyright>Hussein Al Bayati</Copyright>
+    <PackageProjectUrl>https://github.com/H7O/Com.H.Net.Ssh</PackageProjectUrl>
+    <PackageIcon>128x128.jpg</PackageIcon>
+    <PackageReadmeFile>nuget_readme.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/H7O/Com.H.Net.Ssh</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>SFTP;Async;SSH</PackageTags>
+    <PackageReleaseNotes>Maintenance release.</PackageReleaseNotes>
+    <AssemblyVersion>9.0.0.0</AssemblyVersion>
+    <FileVersion>9.0.0.0</FileVersion>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <RootNamespace>Com.H.Net.Ssh</RootNamespace>
+    <Version>9.0.0.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SSH.NET" Version="2025.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="128x128.jpg">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Update="nuget_readme.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>

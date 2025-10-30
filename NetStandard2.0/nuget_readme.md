@@ -1,10 +1,12 @@
 # Com.H.Net.Ssh
-Wrapper to Renci.SshNet. Introduces minor new functionality (e.g. SFTP upload / download folders & subfolders, etc..)
+Kindly visit the project's github page for documentation [https://github.com/H7O/Com.H.Net.Ssh](https://github.com/H7O/Com.H.Net.Ssh)
 
-## How to install
-Best to install it via NuGet package manager [https://www.nuget.org/packages/Com.H.Net.Ssh](https://www.nuget.org/packages/Com.H.Net.Ssh)
+## Installation
+```bash
+dotnet add package Com.H.Net.Ssh
+```
 
-## How to use
+## Usage
 Here is a sample example
 ```c#
 Com.H.Net.Ssh.SFtpClient sFtpClient = 
@@ -17,7 +19,7 @@ Com.H.Net.Ssh.SFtpClient sFtpClient =
 //        Passphrase = "my passphrase" 
 //    });
 
-// single file upload (you can use the async version as well for all the methods if you install version 9.x and above, 2.x is sync only) )
+// single file upload (you can use the async version as well for all the methods if you install version 9.x and above, 2.x is sync only)
 sFtpClient.Upload("c:/test/files_to_upload/some_file.txt", 
     "remote_folder/some_file.txt");
 

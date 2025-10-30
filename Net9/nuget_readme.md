@@ -19,7 +19,7 @@ Com.H.Net.Ssh.SFtpClient sFtpClient =
 //        Passphrase = "my passphrase" 
 //    });
 
-// single file upload
+// single file upload (you can use the async version as well for all the methods if you install version 9.x and above, 2.x is sync only)
 sFtpClient.Upload("c:/test/files_to_upload/some_file.txt", 
     "remote_folder/some_file.txt");
 
