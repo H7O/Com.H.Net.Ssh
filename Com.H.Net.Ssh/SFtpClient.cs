@@ -15,11 +15,28 @@ namespace Com.H.Net.Ssh
     public class SFtpClient : IDisposable
     {
         /// <summary>
+        /// Global default for automatically closing streams across all SFtpClient instances.
+        /// This is checked when an instance's AutoCloseStreams property is null.
+        /// Default is false. Set to true to enable auto-close globally across all instances.
+        /// Can be overridden per instance by setting AutoCloseStreams, or per method call using closeStream parameter.
+        /// </summary>
+        public static bool GlobalAutoCloseStreams { get; set; } = false;
+        
+        /// <summary>
         /// Disables automatic client disconnection after upload/download operations.
         /// Default is false. The library will disconnect automatically after each operation.
         /// The library auto connects before each operation.
         /// </summary>
         public bool DisableAutoDisconnect {get;set;} = false;
+        
+        /// <summary>
+        /// Automatically closes streams passed to Upload/Download methods after the operation completes.
+        /// Default is null. When null, uses GlobalAutoCloseStreams value (which defaults to false).
+        /// When false, the caller is responsible for managing stream lifetime.
+        /// Can be overridden per method call using the closeStream parameter.
+        /// </summary>
+        public bool? AutoCloseStreams {get;set;} = null;
+        
         private Renci.SshNet.SftpClient c;
         public Renci.SshNet.SftpClient Client
         {
@@ -162,8 +179,6 @@ namespace Com.H.Net.Ssh
 				using (var fs = new FileStream(localPath, FileMode.Create))
 				{
 					this.DownloadInternal(remotePath, fs, true);
-					fs.Flush();
-					fs.Close();
 				}
 			}
 			catch { throw; }
@@ -177,12 +192,21 @@ namespace Com.H.Net.Ssh
                 catch { }
             }
         }
-        public void Download(string remotePath, Stream localStream) => this.DownloadInternal(remotePath, localStream, this.DisableAutoDisconnect);
+        /// <summary>
+        /// Downloads a remote file to a stream.
+        /// </summary>
+        /// <param name="remotePath">Remote file path to download</param>
+        /// <param name="localStream">Output stream to write to</param>
+        /// <param name="closeStream">If true, closes the stream after download. If false, leaves it open. If null, uses the AutoCloseStreams property value.</param>
+        public void Download(string remotePath, Stream localStream, bool? closeStream = null) 
+            => this.DownloadInternal(remotePath, localStream, this.DisableAutoDisconnect, closeStream);
         private void DownloadInternal(string remotePath, 
             Stream output, 
-            bool? disableAutoDisconnect=null)
+            bool? disableAutoDisconnect=null,
+            bool? closeStream = null)
         {
             if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
+            if (closeStream is null) closeStream = this.AutoCloseStreams ?? GlobalAutoCloseStreams;
             
             try
             {
@@ -192,6 +216,12 @@ namespace Com.H.Net.Ssh
             catch { throw; }
             finally
             {
+                try
+                {
+                    if (closeStream == true)
+                        output?.Dispose();
+                }
+                catch { }
                 try
                 {
                     if (disableAutoDisconnect == false) this.Disconnect();
@@ -333,12 +363,20 @@ namespace Com.H.Net.Ssh
             }
 
         }
-
-        public void Upload(Stream input, string remotePath, Func<string, string> preProcess = null) 
-            => this.UploadInternal(input, remotePath, preProcess, this.DisableAutoDisconnect);
-        private void UploadInternal(Stream input, string remotePath, Func<string, string> preProcess = null, bool? disableAutoDisconnect = null)
+        /// <summary>
+        /// Uploads data from a stream to a remote file.
+        /// </summary>
+        /// <param name="input">Input stream to read from</param>
+        /// <param name="remotePath">Remote file path to upload to</param>
+        /// <param name="preProcess">Optional function to pre-process the file before upload. Note: If provided, the stream's position will be advanced to the end.</param>
+        /// <param name="closeStream">If true, closes the stream after upload. If false, leaves it open. If null, uses the AutoCloseStreams property value.</param>
+        public void Upload(Stream input, string remotePath, Func<string, string> preProcess = null, bool? closeStream = null) 
+            => this.UploadInternal(input, remotePath, preProcess, this.DisableAutoDisconnect, closeStream);
+        private void UploadInternal(Stream input, string remotePath, Func<string, string> preProcess = null, bool? disableAutoDisconnect = null, bool? closeStream = null)
         {
             if (disableAutoDisconnect is null) disableAutoDisconnect = this.DisableAutoDisconnect;
+            if (closeStream is null) closeStream = this.AutoCloseStreams ?? GlobalAutoCloseStreams;
+            
             string tempPath = null;
             string backupTempPath = null;
 
@@ -362,7 +400,8 @@ namespace Com.H.Net.Ssh
                 {
                     using (var temp = File.OpenWrite(tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.tmp")))
                         input.CopyTo(temp);
-                    input.Close();
+                    // Note: input stream position is now at the end after CopyTo
+                    // The caller is responsible for closing the input stream if needed
                     tempPath = preProcess(backupTempPath = tempPath);
                     using (var temp = File.OpenRead(tempPath))
                         this.Client.UploadFile(temp, remotePath, true);
@@ -373,6 +412,12 @@ namespace Com.H.Net.Ssh
             catch { throw; }
             finally
             {
+                try
+                {
+                    if (closeStream == true)
+                        input?.Dispose();
+                }
+                catch { }
                 try
                 {
                     if (disableAutoDisconnect == false)
