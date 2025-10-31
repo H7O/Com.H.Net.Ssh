@@ -1,4 +1,4 @@
-using Renci.SshNet;
+﻿using Renci.SshNet;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -1036,34 +1036,27 @@ namespace Com.H.Net.Ssh
             {
                 if (disposing)
                 {
+                    // Dispose managed resources
                     try
                     {
-                        if (this.c == null) return;
-                        this.Disconnect();
+                        if (this.c != null)
+                        {
+                            this.Disconnect();
+                            this.c.Dispose();
+                            this.c = null;
+                        }
                     }
                     catch { }
                 }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
 
                 disposedValue = true;
             }
         }
 
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        // ~SFtpClient() {
-        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-        //   Dispose(false);
-        // }
-
         // This code added to correctly implement the disposable pattern.
-        void IDisposable.Dispose()
+        public void Dispose()
         {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
             Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            GC.SuppressFinalize(this);
         }
         #endregion
     }

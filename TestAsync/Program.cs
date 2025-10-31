@@ -39,6 +39,9 @@ class Program
             Console.WriteLine("===========================================");
             Console.WriteLine("  ✅ ALL TESTS COMPLETED SUCCESSFULLY!");
             Console.WriteLine("===========================================");
+            
+            // Test the Dispose pattern
+            await DisposeTest.TestDisposalAsync();
         }
         catch (Exception ex)
         {
