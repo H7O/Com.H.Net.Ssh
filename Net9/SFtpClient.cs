@@ -15,7 +15,7 @@ namespace Com.H.Net.Ssh
     /// Requires SSH.NET API Renci.SshNet.dll (https://github.com/sshnet/SSH.NET). 
     /// If this library is installed via NuGet, the required Renci.SshNet.dll dependency will be automatically added to the project.
     /// </summary>
-    public class SFtpClient : IDisposable
+    public class SFtpClient : IDisposable, IAsyncDisposable
     {
         /// <summary>
         /// Global default for automatically closing streams across all SFtpClient instances.
@@ -26,7 +26,7 @@ namespace Com.H.Net.Ssh
         public static bool GlobalAutoCloseStreams { get; set; } = false;
         
         /// <summary>
-        /// Disables automatic client disconnection after upload/download operations.
+        /// Enables / disables automatic client disconnection after upload/download operations.
         /// Default is false. The library will disconnect automatically after each operation.
         /// The library auto connects before each operation.
         /// </summary>
@@ -250,6 +250,7 @@ namespace Com.H.Net.Ssh
             
             try
             {
+                
                 this.AutoConnect();
                 this.Client.DownloadFile(remotePath, output);
             }
@@ -471,7 +472,7 @@ namespace Com.H.Net.Ssh
             catch
             {
                 throw;
-            }
+            }   
             finally
             {
                 try
@@ -488,6 +489,39 @@ namespace Com.H.Net.Ssh
                 catch { }
             }
 
+        }
+
+        /// <summary>
+        /// Asynchronously opens a stream for reading a remote file.
+        /// The caller is responsible for disposing the returned stream.
+        /// </summary>
+        /// <param name="remotePath">The remote file path to open for reading.</param>
+        /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a stream for reading the remote file.</returns>
+        /// <remarks>
+        /// The returned stream must be disposed by the caller. Use 'await using' or 'using' statement.
+        /// The connection will remain open while the stream is in use if KeepConnectionOpen is true.
+        /// </remarks>
+        public async Task<Stream> DownloadAsStreamAsync(
+            string remotePath, 
+            CancellationToken cancellationToken = default)
+        {
+            
+            try
+            {
+                await this.AutoConnectAsync(cancellationToken);
+                // OpenAsync returns a SftpFileStream which inherits from Stream
+                var stream = await this.Client.OpenAsync(remotePath, FileMode.Open, FileAccess.Read, cancellationToken);
+                
+                // Important: Don't disconnect here - the stream needs the connection to remain open
+                // they should also call Disconnect() or Dispose() on the client after using the stream
+                
+                return stream;
+            }
+            catch
+            {
+                throw;
+            }
         }
 
         #endregion
@@ -1027,8 +1061,8 @@ namespace Com.H.Net.Ssh
         #endregion
 
 
-        #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
+        #region IDisposable/IAsyncDisposable Support
+        private bool disposedValue = false;
 
         protected virtual void Dispose(bool disposing)
         {
@@ -1036,7 +1070,6 @@ namespace Com.H.Net.Ssh
             {
                 if (disposing)
                 {
-                    // Dispose managed resources
                     try
                     {
                         if (this.c != null)
@@ -1048,17 +1081,43 @@ namespace Com.H.Net.Ssh
                     }
                     catch { }
                 }
-
                 disposedValue = true;
             }
         }
 
-        // This code added to correctly implement the disposable pattern.
+        protected virtual async ValueTask DisposeAsyncCore()
+        {
+            if (!disposedValue)
+            {
+                try
+                {
+                    if (this.c != null)
+                    {
+                        // Async disconnect if available, otherwise sync
+                        if (this.c.IsConnected)
+                            this.Disconnect(); // SSH.NET doesn't have async disconnect yet
+                        this.c.Dispose();
+                        this.c = null;
+                    }
+                }
+                catch { }
+                disposedValue = true;
+            }
+        }
+
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            await DisposeAsyncCore();
+            GC.SuppressFinalize(this);
         }
         #endregion
+
     }
 }
 

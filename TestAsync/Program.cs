@@ -103,6 +103,9 @@ class Program
         // Test 13: ExistsAsync (alias method)
         await Test13_ExistsAsync_Alias(client, ct);
         
+        // Test 14: DownloadAsStreamAsync
+        await Test14_DownloadAsStreamAsync(client, ct);
+        
         // Cleanup
         await TestCleanup(client, ct);
     }
@@ -433,6 +436,34 @@ class Program
         
         if (!exists)
             throw new Exception("File should exist!");
+        
+        Console.WriteLine("  ✅ PASSED");
+        Console.WriteLine();
+    }
+    
+    static async Task Test14_DownloadAsStreamAsync(SFtpClient client, CancellationToken ct)
+    {
+        Console.WriteLine("Test 14: DownloadAsStreamAsync");
+        Console.WriteLine("---------------------------------------");
+        
+        var remoteFile = $"{RemoteTestDir}/test_upload.txt";
+        
+        Console.WriteLine($"  Remote: {remoteFile}");
+        Console.Write("  Opening stream... ");
+        
+        await using var stream = await client.DownloadAsStreamAsync(remoteFile, ct);
+        
+        Console.WriteLine("Done!");
+        
+        // Read content from stream
+        using var reader = new StreamReader(stream);
+        var content = await reader.ReadToEndAsync(ct);
+        
+        Console.WriteLine($"  Content length: {content.Length} chars");
+        Console.WriteLine($"  First 50 chars: {content.Substring(0, Math.Min(50, content.Length))}...");
+        
+        if (content.Length == 0)
+            throw new Exception("Downloaded stream is empty!");
         
         Console.WriteLine("  ✅ PASSED");
         Console.WriteLine();
