@@ -17,12 +17,13 @@ Includes full async/await support for .NET 8+ applications.</Description>
     <RepositoryType>git</RepositoryType>
     <PackageTags>SFTP;Async;SSH</PackageTags>
     <PackageReleaseNotes>Maintenance release.</PackageReleaseNotes>
-    <AssemblyVersion>9.0.0.2</AssemblyVersion>
-    <FileVersion>9.0.0.2</FileVersion>
+    <AssemblyVersion>10.0.0.0</AssemblyVersion>
+    <FileVersion>10.0.0.0</FileVersion>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <RootNamespace>Com.H.Net.Ssh</RootNamespace>
-    <Version>9.0.0.2</Version>
+    <Version>10.0.0.0</Version>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
