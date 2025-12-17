@@ -17,13 +17,28 @@ Includes full async/await support for .NET 8+ applications.</Description>
     <RepositoryType>git</RepositoryType>
     <PackageTags>SFTP;Async;SSH</PackageTags>
     <PackageReleaseNotes>Maintenance release.</PackageReleaseNotes>
-    <AssemblyVersion>10.0.0.0</AssemblyVersion>
-    <FileVersion>10.0.0.0</FileVersion>
+    <AssemblyVersion>10.0.0.1</AssemblyVersion>
+    <FileVersion>10.0.0.1</FileVersion>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <RootNamespace>Com.H.Net.Ssh</RootNamespace>
-    <Version>10.0.0.0</Version>
+    <Version>10.0.0.1</Version>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    
+    <!-- Symbol package generation for NuGet.org symbol server -->
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    
+    <!-- Source Link support -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    
+    <!-- Deterministic builds -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    
+    <!-- Debug symbols -->
+    <DebugType>embedded</DebugType>
   </PropertyGroup>
 
   <ItemGroup>
@@ -33,6 +48,8 @@ Includes full async/await support for .NET 8+ applications.</Description>
 
   <ItemGroup>
     <PackageReference Include="SSH.NET" Version="2025.1.0" />
+    <!-- Source Link for GitHub -->
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
   </ItemGroup>
 
 </Project>
