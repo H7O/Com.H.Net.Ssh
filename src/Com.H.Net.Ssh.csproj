@@ -65,6 +65,18 @@ now ships alongside the rest. It has no known advisories.</PackageReleaseNotes>
 
     <!-- Embed debug symbols in the assembly (avoids a separate .snupkg) -->
     <DebugType>embedded</DebugType>
+
+    <!-- Put the source itself in the PDB, not just a Source Link URL pointing at it.
+         Source Link alone is enough only when the compiler rewrites source paths to the "/_/"
+         form that the Source Link map covers, and that rewrite is a case-sensitive prefix match
+         against the repository root. Parallel inner builds of a multi-targeted project can hand
+         MSBuild the project directory with a differently-cased drive letter ("c:\" vs "C:\"), and
+         when they do, the rewrite silently does not apply for that one target framework: the map
+         still says "/_/*" while the documents say "C:\code\...". Stepping then fails for that
+         target only, with nothing in the build output to indicate it. Embedding the sources makes
+         stepping independent of that, and of GitHub being reachable at all. This library is four
+         files, so the cost is a few KB. -->
+    <EmbedAllSources>true</EmbedAllSources>
   </PropertyGroup>
 
   <ItemGroup>
