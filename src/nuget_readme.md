@@ -1,6 +1,9 @@
 # Com.H.Net.Ssh
 Wrapper to Renci.SshNet. Introduces minor new functionality (e.g. SFTP upload / download folders & subfolders, etc..)
 
+Targets `netstandard2.0` (.NET Framework 4.6.2+), `net8.0`, `net9.0` and `net10.0` from one package,
+with the same sync and async API on every one of them.
+
 Kindly visit the project's github page for documentation [https://github.com/H7O/Com.H.Net.Ssh](https://github.com/H7O/Com.H.Net.Ssh)
 
 ## Installation
@@ -21,7 +24,7 @@ Com.H.Net.Ssh.SFtpClient sFtpClient =
 //        Passphrase = "my passphrase" 
 //    });
 
-// single file upload (you can use the async version as well for all the methods if you install version 9.x and above, 2.x is sync only)
+// single file upload (every method also has an async version, e.g. UploadAsync)
 sFtpClient.Upload("c:/test/files_to_upload/some_file.txt", 
     "remote_folder/some_file.txt");
 

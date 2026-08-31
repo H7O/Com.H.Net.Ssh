@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Net9\Net9.csproj" />
+    <ProjectReference Include="..\src\Com.H.Net.Ssh.csproj" />
   </ItemGroup>
 
 </Project>

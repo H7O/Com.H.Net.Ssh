@@ -368,7 +368,13 @@ namespace Com.H.Net.Ssh
                 }
 
                 if (File.Exists(localPath)) File.Delete(localPath);
+                // FileStream is not IAsyncDisposable on netstandard2.0; its synchronous Dispose
+                // still flushes, so the only thing lost is an async flush.
+#if NETSTANDARD2_0
+                using (var fs = new FileStream(localPath, FileMode.Create))
+#else
                 await using (var fs = new FileStream(localPath, FileMode.Create))
+#endif
                 {
                     await this.DownloadInternalAsync(remotePath, fs, true, null, cancellationToken);
                 }
@@ -461,13 +467,26 @@ namespace Com.H.Net.Ssh
             string tempPathBackup = null;
             try
             {
+                // FileStream is not IAsyncDisposable on netstandard2.0; its synchronous Dispose
+                // still flushes, so the only thing lost is an async flush.
+#if NETSTANDARD2_0
+                using (var f = File.OpenWrite(tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.tmp")))
+#else
                 await using (var f = File.OpenWrite(tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.tmp")))
+#endif
                     await this.DownloadInternalAsync(remoteFilePath, f, keepConnectionOpen, null, cancellationToken);
                 if (postProcess != null)
                     tempPath = postProcess(tempPathBackup = tempPath);
-                return encoding == null 
-                    ? await File.ReadAllTextAsync(tempPath, cancellationToken) 
+                // File is static and so cannot be extended; netstandard2.0 uses the shim in Polyfills.cs.
+#if NETSTANDARD2_0
+                return encoding == null
+                    ? await FilePolyfills.ReadAllTextAsync(tempPath, cancellationToken)
+                    : await FilePolyfills.ReadAllTextAsync(tempPath, encoding, cancellationToken);
+#else
+                return encoding == null
+                    ? await File.ReadAllTextAsync(tempPath, cancellationToken)
                     : await File.ReadAllTextAsync(tempPath, encoding, cancellationToken);
+#endif
             }
             catch
             {
@@ -779,7 +798,13 @@ namespace Com.H.Net.Ssh
             }
             if (!File.Exists(localPath)) throw new Exception("Unable to access file '" + localPath + "'");
             if (remotePath.EndsWith("/")) remotePath += Path.GetFileName(localPath);
+            // FileStream is not IAsyncDisposable on netstandard2.0; its synchronous Dispose
+            // still flushes, so the only thing lost is an async flush.
+#if NETSTANDARD2_0
+            using (var file = File.OpenRead(localPath))
+#else
             await using (var file = File.OpenRead(localPath))
+#endif
             {
                 await this.UploadInternalAsync(file, remotePath, preProcess, keepConnectionOpen, null, cancellationToken);
             }
@@ -826,12 +851,22 @@ namespace Com.H.Net.Ssh
                 }
                 if (preProcess != null)
                 {
+                    // FileStream is not IAsyncDisposable on netstandard2.0; its synchronous Dispose
+                    // still flushes, so the only thing lost is an async flush.
+#if NETSTANDARD2_0
+                    using (var temp = File.OpenWrite(tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.tmp")))
+#else
                     await using (var temp = File.OpenWrite(tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.tmp")))
+#endif
                         await input.CopyToAsync(temp, 81920, cancellationToken);
                     // Note: input stream position is now at the end after CopyTo
                     // The caller is responsible for closing the input stream if needed
                     tempPath = preProcess(backupTempPath = tempPath);
+#if NETSTANDARD2_0
+                    using (var temp = File.OpenRead(tempPath))
+#else
                     await using (var temp = File.OpenRead(tempPath))
+#endif
                         await this.Client.UploadFileAsync(temp, remotePath, cancellationToken);
                 }
                 else

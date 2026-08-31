@@ -1,0 +1,128 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net8.0;net9.0;net10.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <PackageId>Com.H.Net.Ssh</PackageId>
+    <AssemblyName>Com.H.Net.Ssh</AssemblyName>
+    <Authors>Hussein Al Bayati</Authors>
+    <Description>Wrapper to SSH.NET API by Renci.
+Introduces minor new functionality (upload / download folders and subfolders, etc..)
+Includes full async/await support on every target, including .NET Standard 2.0 (.NET Framework 4.6.2+).</Description>
+    <Copyright>Hussein Al Bayati</Copyright>
+    <PackageProjectUrl>https://github.com/H7O/Com.H.Net.Ssh</PackageProjectUrl>
+    <PackageIcon>128x128.jpg</PackageIcon>
+    <PackageReadmeFile>nuget_readme.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/H7O/Com.H.Net.Ssh</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>SFTP;Async;SSH</PackageTags>
+    <PackageReleaseNotes>Single package for legacy and modern targets. The netstandard2.0 build (2.x line) and the
+net8.0+ build (10.x line) are merged into one package targeting netstandard2.0, net8.0, net9.0 and net10.0,
+so .NET Framework 4.6.2+ / .NET Standard 2.0 consumers now get the same API surface as .NET 8+ consumers.
+
+The async methods previously exclusive to the 10.x line (ExistAsync, ExistsAsync, DownloadAsync,
+DownloadAsStringAsync, DownloadAsStreamAsync, UploadAsync, DeleteAsync, ListFilesAsync, GetFileInfoAsync,
+DisposeAsync) are now available on netstandard2.0 as well.
+
+Note for 2.x users upgrading: Dispose() now calls GC.SuppressFinalize, and SFtpClient additionally
+implements IAsyncDisposable. No existing member was removed or changed.
+
+Dependencies are now open-ended ranges with raised floors, so that a consumer who references only
+this package is not left resolving a flagged version they would otherwise have to pin themselves:
+
+* SSH.NET floor is 2026.0.0, the first release carrying the fix for GHSA-q939-rpr3-3284 (arbitrary
+  file write via server-controlled filenames during ScpClient recursive download). This library
+  only uses SftpClient and never ScpClient, so the advisory was not reachable through its API, but
+  the transitive warning still reached consumers.
+* Microsoft.Extensions.Logging.Abstractions floor is 10.0.11, raising the 8.0.3 that SSH.NET asks
+  for off the .NET 8 servicing line before it leaves support in November 2026. This also carries
+  Microsoft.Extensions.DependencyInjection.Abstractions from 8.0.2 to 10.0.11.
+* Microsoft.Bcl.AsyncInterfaces floor is 10.0.11 (netstandard2.0 only).
+* System.IO.Hashing floor is 10.0.11, and on the legacy path System.Formats.Asn1 and
+  Microsoft.Bcl.Cryptography are 10.0.11 as well.
+
+Every package in the resulting graph resolves to its latest stable release, on all four targets,
+and none has a known advisory against it.
+
+One addition to note for .NET Framework and .NET Standard 2.0 consumers: the newer
+Logging.Abstractions brings System.Diagnostics.DiagnosticSource into the graph, so that assembly
+now ships alongside the rest. It has no known advisories.</PackageReleaseNotes>
+    <AssemblyVersion>10.1.0.0</AssemblyVersion>
+    <FileVersion>10.1.0.0</FileVersion>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <RootNamespace>Com.H.Net.Ssh</RootNamespace>
+    <Version>10.1.0</Version>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <!-- Deterministic builds for reproducibility -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true' or '$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+
+    <!-- Source Link - enables stepping into source code when debugging -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+
+    <!-- Embed debug symbols in the assembly (avoids a separate .snupkg) -->
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Open-ended range: 2026.0.0 is the floor (the first release carrying the fix for
+         GHSA-q939-rpr3-3284), with no ceiling, so a consumer is free to resolve forward to any
+         newer SSH.NET without waiting on a release of this package.
+         Two things worth knowing when revisiting this:
+         - NuGet resolves to the LOWEST version satisfying a range, so a consumer that asks for
+           nothing else gets exactly 2026.0.0. Raising this floor is what moves consumers forward.
+         - "[2026.0.0,)" and a bare "2026.0.0" mean the same thing to NuGet, and pack normalises
+           this to the bare form. Seeing "2026.0.0" in the published .nuspec is expected and does
+           not mean the version was pinned. -->
+    <PackageReference Include="SSH.NET" Version="[2026.0.0,)" />
+
+    <!-- Not used by this library's own code. It is referenced only to raise the floor on a
+         dependency SSH.NET brings in transitively: SSH.NET asks for 8.0.3, which sits on the
+         .NET 8 servicing line, and .NET 8 leaves support in November 2026. Once a line is out
+         of support a newly discovered vulnerability gets no patched release on it, so consumers
+         would have nowhere to upgrade to. Pointing at the .NET 10 line keeps that escape hatch
+         open. Raising this also pulls Microsoft.Extensions.DependencyInjection.Abstractions
+         (8.0.2 -> 10.0.11) along with it, so that one needs no reference of its own.
+         Drop this if SSH.NET ever stops depending on it. -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.0.11,)" />
+
+    <!-- Also not used directly. SSH.NET brings this in on every target at 10.0.10; referenced
+         here only to hold the floor at the latest release. -->
+    <PackageReference Include="System.IO.Hashing" Version="[10.0.11,)" />
+
+    <!-- Source Link for GitHub. PrivateAssets="All" keeps it out of the .nuspec entirely, so it
+         never reaches a consumer and its version is a build-time concern only. Left pinned rather
+         than ranged so builds stay reproducible. Note this is ahead of Com.H and
+         Com.H.Data.Common (10.0.301); since it never ships, they need not match. -->
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.400" PrivateAssets="All" />
+  </ItemGroup>
+
+  <!-- Polyfill package for netstandard2.0. Brings IAsyncDisposable, IAsyncEnumerable/IAsyncEnumerator,
+       ValueTask and EnumeratorCancellationAttribute, which the async API surface in SFtpClient needs
+       and which netstandard2.0 does not carry.
+       Com.H and Com.H.Data.Common ask for 10.0.10; this floor is higher, which is fine and needs no
+       coordination. When several packages request the same dependency as a minimum, NuGet resolves
+       to the HIGHEST of those minimums, so a consumer referencing all three gets 10.0.11 and every
+       request is satisfied. Only an exact pin, "[10.0.10]", could conflict here. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="[10.0.11,)" />
+
+    <!-- Neither is used directly. Both are pulled in by SSH.NET at 10.0.10 on the legacy path and
+         are referenced here only to hold the floor at the latest release. They live in this group
+         because a .NET Framework consumer reads this package's netstandard2.0 dependency group:
+         System.Formats.Asn1 reaches it via SSH.NET's netstandard2.0 group and
+         Microsoft.Bcl.Cryptography via SSH.NET's net462 group. Neither is in the net8.0+ graphs,
+         so keeping them out of the unconditional group spares modern consumers the references. -->
+    <PackageReference Include="System.Formats.Asn1" Version="[10.0.11,)" />
+    <PackageReference Include="Microsoft.Bcl.Cryptography" Version="[10.0.11,)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="128x128.jpg" Pack="true" PackagePath="" />
+    <None Include="nuget_readme.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

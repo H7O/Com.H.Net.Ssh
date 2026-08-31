@@ -1,6 +1,22 @@
 # Com.H.Net.Ssh
 Wrapper to SSH.NET. Introduces minor new functionality (e.g. SFTP upload / download folders & subfolders, etc..)
 
+## Supported frameworks
+One package covers legacy and modern targets:
+
+| Target | Runs on |
+| --- | --- |
+| `netstandard2.0` | .NET Framework 4.6.2+, Mono, Xamarin, and anything else that consumes .NET Standard 2.0 |
+| `net8.0` / `net9.0` / `net10.0` | .NET 8, 9 and 10 |
+
+Every target exposes the same API, sync and async alike. On `netstandard2.0` the async surface is
+backed by the `Microsoft.Bcl.AsyncInterfaces` package, which NuGet pulls in automatically; the modern
+targets use the built-in types and take no extra dependency.
+
+Before version 10.1.0 this was split across two version lines of the same package id — 2.x built for
+`netstandard2.0` and was sync-only, 10.x built for .NET 8+ and had the async methods. From 10.1.0
+onwards there is one line, so a .NET Framework project can install the latest version and get async.
+
 ## How to install
 Best to install it via NuGet package manager [https://www.nuget.org/packages/Com.H.Net.Ssh](https://www.nuget.org/packages/Com.H.Net.Ssh)
 
@@ -17,7 +33,7 @@ Com.H.Net.Ssh.SFtpClient sFtpClient =
 //        Passphrase = "my passphrase" 
 //    });
 
-// single file upload (you can use the async version as well for all the methods if you install version 9.x and above, 2.x is sync only) )
+// single file upload (every method also has an async version - see below)
 sFtpClient.Upload("c:/test/files_to_upload/some_file.txt", 
     "remote_folder/some_file.txt");
 
@@ -41,6 +57,32 @@ sFtpClient.Download("remote_folder/some_file.txt",
 sFtpClient.Download("remote_folder/", 
     "c:/test/files_to_download/");
 ```
+
+### Async
+Every method above has an async counterpart taking an optional `CancellationToken`. These work on
+.NET Framework 4.6.2+ as well, not just .NET 8+.
+
+```c#
+await using var sFtpClient =
+    new Com.H.Net.Ssh.SFtpClient("server_name_or_ip", 22, "user_id", "pwd");
+
+await sFtpClient.UploadAsync("c:/test/files_to_upload/some_file.txt",
+    "remote_folder/some_file.txt", cancellationToken: token);
+
+await sFtpClient.DownloadAsync("remote_folder/", "c:/test/files_to_download/", token);
+
+var text = await sFtpClient.DownloadAsStringAsync("remote_folder/some_file.txt",
+    cancellationToken: token);
+
+// caller disposes the returned stream
+await using var stream = await sFtpClient.DownloadAsStreamAsync("remote_folder/some_file.txt", token);
+
+foreach (var f in await sFtpClient.ListFilesAsync("remote_folder/", token))
+    Console.WriteLine(f.FullPath);
+```
+
+On `netstandard2.0`, `await using` needs C# 8 or later in the consuming project (`<LangVersion>latest</LangVersion>`);
+plain `using` plus an explicit `await client.DisposeAsync()` works otherwise.
 
 The private key should be of a classical format (not OpenSSH format). 
 If you happen to have an OpenSSH based private key, you can convert it to classical using the following command:
