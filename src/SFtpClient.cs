@@ -1070,13 +1070,18 @@ namespace Com.H.Net.Ssh
 
         #region exists
 
-        public bool Exists(string remotePath) => this.ExistsInternal(remotePath, this.KeepConnectionOpen);
-        private bool ExistsInternal(string remotePath, bool? keepConnectionOpen = null)
-        {
-            if (this.GetFileInfoInternal(remotePath, keepConnectionOpen) == null) return false;
-            return true;
-        }
-        
+        /// <summary>
+        /// Checks whether a file or directory exists on the SFTP server.
+        /// This is an alias for Exist (note the singular form).
+        /// </summary>
+        /// <param name="remotePath">The remote path to check for existence.</param>
+        /// <returns>True if the file/directory exists; otherwise, false.</returns>
+        /// <remarks>
+        /// Before 10.1.1 this went through GetFileInfo, which throws SftpPathNotFoundException for a
+        /// missing path, so it threw instead of returning false.
+        /// </remarks>
+        public bool Exists(string remotePath) => this.ExistInternal(remotePath, this.KeepConnectionOpen);
+
         /// <summary>
         /// Asynchronously checks whether a file or directory exists on the SFTP server.
         /// This is an alias for ExistAsync (note the singular form).
@@ -1084,15 +1089,12 @@ namespace Com.H.Net.Ssh
         /// <param name="remotePath">The remote path to check for existence.</param>
         /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains true if the file/directory exists; otherwise, false.</returns>
-        public async Task<bool> ExistsAsync(string remotePath, CancellationToken cancellationToken = default) 
-            => await this.ExistsInternalAsync(remotePath, this.KeepConnectionOpen, cancellationToken);
-        
-        private async Task<bool> ExistsInternalAsync(string remotePath, bool? keepConnectionOpen = null, CancellationToken cancellationToken = default)
-        {
-            var fileInfo = await this.GetFileInfoInternalAsync(remotePath, keepConnectionOpen, cancellationToken);
-            if (fileInfo == null) return false;
-            return true;
-        }
+        /// <remarks>
+        /// Before 10.1.1 this went through GetFileInfoAsync, which throws SftpPathNotFoundException for
+        /// a missing path, so it threw instead of returning false.
+        /// </remarks>
+        public async Task<bool> ExistsAsync(string remotePath, CancellationToken cancellationToken = default)
+            => await this.ExistInternalAsync(remotePath, this.KeepConnectionOpen, cancellationToken);
         #endregion
 
 
