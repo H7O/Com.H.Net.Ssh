@@ -741,7 +741,14 @@ namespace Com.H.Net.Ssh
                     folder_to_create += folder;
                     if (!this.Client.Exists(folder_to_create))
                     {
-                        this.Client.CreateDirectory(folder_to_create);
+                        try
+                        {
+                            this.Client.CreateDirectory(folder_to_create);
+                        }
+                        // Created meanwhile by another client, as two uploads into one new folder do.
+                        catch (Renci.SshNet.Common.SshException) when (this.Client.Exists(folder_to_create))
+                        {
+                        }
                     }
                 }
                 if (preProcess != null)
@@ -904,7 +911,16 @@ namespace Com.H.Net.Ssh
                     folder_to_create += folder;
                     if (!await this.Client.ExistsAsync(folder_to_create, cancellationToken))
                     {
-                        await this.Client.CreateDirectoryAsync(folder_to_create, cancellationToken);
+                        try
+                        {
+                            await this.Client.CreateDirectoryAsync(folder_to_create, cancellationToken);
+                        }
+                        catch (Renci.SshNet.Common.SshException)
+                        {
+                            // Created meanwhile by another client, as two uploads into one new folder do.
+                            if (!await this.Client.ExistsAsync(folder_to_create, cancellationToken))
+                                throw;
+                        }
                     }
                 }
                 if (preProcess != null)

@@ -16,29 +16,25 @@ Includes full async/await support on every target, including .NET Standard 2.0 (
     <RepositoryUrl>https://github.com/H7O/Com.H.Net.Ssh</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>SFTP;Async;SSH</PackageTags>
-    <PackageReleaseNotes>10.2.0
+    <PackageReleaseNotes>10.2.1
 
-* Added: SFtpClient.Rename and RenameAsync rename (move) a remote file or directory, through
-  SSH.NET's RenameFile and RenameFileAsync. On most servers they fail when the new path already
-  exists, as SFTP's rename does. Like the other methods, they connect when needed and disconnect
-  afterwards unless KeepConnectionOpen is true.
-* Updated: the dependency floors move to the latest .NET 10 servicing release, 10.0.13:
-  Microsoft.Extensions.Logging.Abstractions and System.IO.Hashing on every target, and
-  Microsoft.Bcl.AsyncInterfaces, System.Formats.Asn1 and Microsoft.Bcl.Cryptography on
-  netstandard2.0. SSH.NET stays at 2026.0.0, its latest release.
+* Fixed: two uploads into the same new remote folder at once could make one of them fail. Upload
+  and UploadAsync create the folders above the file when they are missing, and a folder another
+  client created between the check and the create made the create throw. They now accept a folder
+  that exists by then.
 
-10.1.1 fixed Exists and ExistsAsync for a missing path:
-https://www.nuget.org/packages/Com.H.Net.Ssh/10.1.1#releasenotes-body-tab
+10.2.0 added SFtpClient.Rename and RenameAsync, and raised the dependency floors to 10.0.13:
+https://www.nuget.org/packages/Com.H.Net.Ssh/10.2.0#releasenotes-body-tab
 
 Upgrading from 10.0.x or 2.x? 10.1.0 merged the netstandard2.0 and net8.0+ packages into one and
 raised the dependency floors (including SSH.NET 2026.0.0). Its notes list every change:
 https://www.nuget.org/packages/Com.H.Net.Ssh/10.1.0#releasenotes-body-tab</PackageReleaseNotes>
-    <AssemblyVersion>10.2.0.0</AssemblyVersion>
-    <FileVersion>10.2.0.0</FileVersion>
+    <AssemblyVersion>10.2.1.0</AssemblyVersion>
+    <FileVersion>10.2.1.0</FileVersion>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <RootNamespace>Com.H.Net.Ssh</RootNamespace>
-    <Version>10.2.0</Version>
+    <Version>10.2.1</Version>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
     <!-- Deterministic builds for reproducibility -->
