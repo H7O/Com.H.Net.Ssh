@@ -47,6 +47,10 @@ sFtpClient.Download("remote_folder/some_file.txt",
 // download a folder (and its subfolders)
 sFtpClient.Download("remote_folder/", 
     "c:/test/files_to_download/");
+
+// rename (move) a remote file; on most servers it fails if the new path exists
+sFtpClient.Rename("remote_folder/some_file.tmp",
+    "remote_folder/some_file.txt");
 ```
 
 The private key should be of a classical format (not OpenSSH format). 

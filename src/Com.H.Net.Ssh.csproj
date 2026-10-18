@@ -16,21 +16,25 @@ Includes full async/await support on every target, including .NET Standard 2.0 (
     <RepositoryUrl>https://github.com/H7O/Com.H.Net.Ssh</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>SFTP;Async;SSH</PackageTags>
-    <PackageReleaseNotes>10.1.1
+    <PackageReleaseNotes>10.2.0
 
-* Fixed: SFtpClient.Exists and ExistsAsync threw SftpPathNotFoundException for a missing path
-  instead of returning false. They went through GetFileInfo, which throws when the path is not
-  there. They now do the same check as Exist and ExistAsync, which were already correct.
+* Added: SFtpClient.Rename and RenameAsync rename (move) a remote file or directory, through
+  SSH.NET's RenameFile and RenameFileAsync. On most servers they fail when the new path already
+  exists, as SFTP's rename does. Like the other methods, they connect when needed and disconnect
+  afterwards unless KeepConnectionOpen is true.
+
+10.1.1 fixed Exists and ExistsAsync for a missing path:
+https://www.nuget.org/packages/Com.H.Net.Ssh/10.1.1#releasenotes-body-tab
 
 Upgrading from 10.0.x or 2.x? 10.1.0 merged the netstandard2.0 and net8.0+ packages into one and
 raised the dependency floors (including SSH.NET 2026.0.0). Its notes list every change:
 https://www.nuget.org/packages/Com.H.Net.Ssh/10.1.0#releasenotes-body-tab</PackageReleaseNotes>
-    <AssemblyVersion>10.1.1.0</AssemblyVersion>
-    <FileVersion>10.1.1.0</FileVersion>
+    <AssemblyVersion>10.2.0.0</AssemblyVersion>
+    <FileVersion>10.2.0.0</FileVersion>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <RootNamespace>Com.H.Net.Ssh</RootNamespace>
-    <Version>10.1.1</Version>
+    <Version>10.2.0</Version>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
     <!-- Deterministic builds for reproducibility -->

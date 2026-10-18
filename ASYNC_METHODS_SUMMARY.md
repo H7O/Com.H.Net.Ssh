@@ -140,6 +140,21 @@ await client.DeleteAsync("/remote/folder");
 
 ---
 
+### Rename Operations
+
+#### RenameAsync
+```csharp
+public async Task RenameAsync(string oldPath, string newPath, CancellationToken cancellationToken = default)
+```
+Asynchronously renames (moves) a remote file or directory. On most servers it fails when `newPath` already exists, as SFTP's rename does.
+
+**Example:**
+```csharp
+await client.RenameAsync("/remote/upload.tmp", "/remote/file.txt");
+```
+
+---
+
 ### Upload Operations
 
 #### UploadAsync (from local path)

@@ -595,6 +595,64 @@ namespace Com.H.Net.Ssh
         }
         #endregion
 
+        #region rename
+        /// <summary>
+        /// Renames (moves) a remote file or directory. On most servers it fails when
+        /// <paramref name="newPath"/> already exists, as SFTP's rename does.
+        /// </summary>
+        /// <param name="oldPath">The remote path to rename.</param>
+        /// <param name="newPath">The new remote path.</param>
+        public void Rename(string oldPath, string newPath) => this.RenameInternal(oldPath, newPath, this.KeepConnectionOpen);
+        private void RenameInternal(string oldPath, string newPath, bool? keepConnectionOpen = null)
+        {
+            if (keepConnectionOpen is null) keepConnectionOpen = this.KeepConnectionOpen;
+            try
+            {
+                this.AutoConnect();
+                this.Client.RenameFile(oldPath, newPath);
+            }
+            catch { throw; }
+            finally
+            {
+                try
+                {
+                    if (keepConnectionOpen != true) this.Disconnect();
+                }
+                catch { }
+            }
+        }
+
+        /// <summary>
+        /// Asynchronously renames (moves) a remote file or directory. On most servers it fails when
+        /// <paramref name="newPath"/> already exists, as SFTP's rename does.
+        /// </summary>
+        /// <param name="oldPath">The remote path to rename.</param>
+        /// <param name="newPath">The new remote path.</param>
+        /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public async Task RenameAsync(string oldPath, string newPath, CancellationToken cancellationToken = default)
+            => await this.RenameInternalAsync(oldPath, newPath, this.KeepConnectionOpen, cancellationToken);
+
+        private async Task RenameInternalAsync(string oldPath, string newPath, bool? keepConnectionOpen = null, CancellationToken cancellationToken = default)
+        {
+            if (keepConnectionOpen is null) keepConnectionOpen = this.KeepConnectionOpen;
+            try
+            {
+                await this.AutoConnectAsync(cancellationToken);
+                await this.Client.RenameFileAsync(oldPath, newPath, cancellationToken);
+            }
+            catch { throw; }
+            finally
+            {
+                try
+                {
+                    if (keepConnectionOpen != true) this.Disconnect();
+                }
+                catch { }
+            }
+        }
+        #endregion
+
         #region upload
         public void Upload(
             string localPath, 
