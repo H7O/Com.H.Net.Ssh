@@ -22,6 +22,10 @@ Includes full async/await support on every target, including .NET Standard 2.0 (
   SSH.NET's RenameFile and RenameFileAsync. On most servers they fail when the new path already
   exists, as SFTP's rename does. Like the other methods, they connect when needed and disconnect
   afterwards unless KeepConnectionOpen is true.
+* Updated: the dependency floors move to the latest .NET 10 servicing release, 10.0.13:
+  Microsoft.Extensions.Logging.Abstractions and System.IO.Hashing on every target, and
+  Microsoft.Bcl.AsyncInterfaces, System.Formats.Asn1 and Microsoft.Bcl.Cryptography on
+  netstandard2.0. SSH.NET stays at 2026.0.0, its latest release.
 
 10.1.1 fixed Exists and ExistsAsync for a missing path:
 https://www.nuget.org/packages/Com.H.Net.Ssh/10.1.1#releasenotes-body-tab
@@ -79,30 +83,30 @@ https://www.nuget.org/packages/Com.H.Net.Ssh/10.1.0#releasenotes-body-tab</Packa
          of support a newly discovered vulnerability gets no patched release on it, so consumers
          would have nowhere to upgrade to. Pointing at the .NET 10 line keeps that escape hatch
          open. Raising this also pulls Microsoft.Extensions.DependencyInjection.Abstractions
-         (8.0.2 -> 10.0.11) along with it, so that one needs no reference of its own.
+         (8.0.2 -> 10.0.13) along with it, so that one needs no reference of its own.
          Drop this if SSH.NET ever stops depending on it. -->
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.0.11,)" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.0.13,)" />
 
     <!-- Also not used directly. SSH.NET brings this in on every target at 10.0.10; referenced
          here only to hold the floor at the latest release. -->
-    <PackageReference Include="System.IO.Hashing" Version="[10.0.11,)" />
+    <PackageReference Include="System.IO.Hashing" Version="[10.0.13,)" />
 
     <!-- Source Link for GitHub. PrivateAssets="All" keeps it out of the .nuspec entirely, so it
          never reaches a consumer and its version is a build-time concern only. Left pinned rather
-         than ranged so builds stay reproducible. Note this is ahead of Com.H and
-         Com.H.Data.Common (10.0.301); since it never ships, they need not match. -->
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.400" PrivateAssets="All" />
+         than ranged so builds stay reproducible. Since it never ships, it need not match the
+         version the other Com.H packages use. -->
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.402" PrivateAssets="All" />
   </ItemGroup>
 
   <!-- Polyfill package for netstandard2.0. Brings IAsyncDisposable, IAsyncEnumerable/IAsyncEnumerator,
        ValueTask and EnumeratorCancellationAttribute, which the async API surface in SFtpClient needs
        and which netstandard2.0 does not carry.
-       Com.H and Com.H.Data.Common ask for 10.0.10; this floor is higher, which is fine and needs no
-       coordination. When several packages request the same dependency as a minimum, NuGet resolves
-       to the HIGHEST of those minimums, so a consumer referencing all three gets 10.0.11 and every
-       request is satisfied. Only an exact pin, "[10.0.10]", could conflict here. -->
+       Other packages a consumer references (Com.H, Com.H.Data.Common) may ask for a different
+       minimum, which is fine and needs no coordination. When several packages request the same
+       dependency as a minimum, NuGet resolves to the HIGHEST of those minimums, so every request is
+       satisfied. Only an exact pin, such as "[10.0.10]", could conflict here. -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="[10.0.11,)" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="[10.0.13,)" />
 
     <!-- Neither is used directly. Both are pulled in by SSH.NET at 10.0.10 on the legacy path and
          are referenced here only to hold the floor at the latest release. They live in this group
@@ -110,8 +114,8 @@ https://www.nuget.org/packages/Com.H.Net.Ssh/10.1.0#releasenotes-body-tab</Packa
          System.Formats.Asn1 reaches it via SSH.NET's netstandard2.0 group and
          Microsoft.Bcl.Cryptography via SSH.NET's net462 group. Neither is in the net8.0+ graphs,
          so keeping them out of the unconditional group spares modern consumers the references. -->
-    <PackageReference Include="System.Formats.Asn1" Version="[10.0.11,)" />
-    <PackageReference Include="Microsoft.Bcl.Cryptography" Version="[10.0.11,)" />
+    <PackageReference Include="System.Formats.Asn1" Version="[10.0.13,)" />
+    <PackageReference Include="Microsoft.Bcl.Cryptography" Version="[10.0.13,)" />
   </ItemGroup>
 
   <ItemGroup>
