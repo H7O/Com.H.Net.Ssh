@@ -26,10 +26,10 @@ Here is a sample example
 Com.H.Net.Ssh.SFtpClient sFtpClient = 
     new Com.H.Net.Ssh.SFtpClient("server_name_or_ip", 22, "user_id", "pwd");
 // or you can use the constructor with a private key instead of a password
-// new Com.H.Net.Ssh.SFtpClient("server_name_or_ip", 22, 
+// new Com.H.Net.Ssh.SFtpClient("server_name_or_ip", 22, "user_id",
 //    new Com.H.Net.Ssh.PrivateKeyFileSettings()
 //    {
-//        Path = @"C:\path\to\key.pem",
+//        Path = @"C:\path\to\private_key",
 //        Passphrase = "my passphrase" 
 //    });
 
@@ -88,13 +88,64 @@ foreach (var f in await sFtpClient.ListFilesAsync("remote_folder/", token))
 On `netstandard2.0`, `await using` needs C# 8 or later in the consuming project (`<LangVersion>latest</LangVersion>`);
 plain `using` plus an explicit `await client.DisposeAsync()` works otherwise.
 
-The private key should be of a classical format (not OpenSSH format). 
-If you happen to have an OpenSSH based private key, you can convert it to classical using the following command:
-```bash
-ssh-keygen -p -f my_openssh_private_key.pem -m pem -P "my passphrase" -N "my passphrase" -O my_classic_private_key.pem
+## File sizes
+`ListFiles` and `GetFileInfo` (and their async versions) fill in each entry's `Size` in bytes, from
+version 10.3.0 on. Before that it was always zero.
+
+```c#
+foreach (var f in await sFtpClient.ListFilesAsync("remote_folder/", token))
+    Console.WriteLine($"{f.Name}: {(f.IsDirectory ? "folder" : f.Size + " bytes")}");
 ```
 
-And if you don't have a passphrase, you can use the following command to convert your key:
+## Checking the server's host key
+This check is optional. Leave `HostKeyFingerprint` unset and the client connects as it did in every
+earlier version, whatever key the server shows. Nothing has to be looked up before a first login.
+
+An SSH server proves who it is with its host key. Unless you say which key to expect, any server
+that answers at the address is accepted, and it receives your password and your files. Set
+`HostKeyFingerprint` and the client refuses any server that shows another key, before the login is sent:
+
+```c#
+var sFtpClient = new Com.H.Net.Ssh.SFtpClient("server_name_or_ip", 22, "user_id", "pwd")
+{
+    HostKeyFingerprint = "SHA256:DA04nSicK5AmDlNtTpfXp2RKDOpqCtEb3cXppB5Mfp8"
+};
+```
+
+The fingerprint is the one OpenSSH shows the first time you connect to a server ("ED25519 key
+fingerprint is SHA256:..."), and the one `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` prints on
+the server itself. A server that shows another key makes every method throw an `SshConnectionException`
+that names both fingerprints.
+
+### Trusting a server the first time
+You don't need to know the fingerprint in advance. After a connection, `ServerHostKeyFingerprint`
+holds the fingerprint the server showed. Store it after the first connection and set
+`HostKeyFingerprint` to it from then on. The first connection then accepts the server's key, and
+every later one is held to that same key:
+
+```c#
+var saved = File.Exists("server.fingerprint") ? File.ReadAllText("server.fingerprint") : null;
+
+var sFtpClient = new Com.H.Net.Ssh.SFtpClient("server_name_or_ip", 22, "user_id", "pwd")
+{
+    HostKeyFingerprint = saved   // null the first time, so the first connection accepts the key
+};
+
+sFtpClient.Upload("c:/test/files_to_upload/some_file.txt", "remote_folder/some_file.txt");
+
+if (saved == null)
+    File.WriteAllText("server.fingerprint", sFtpClient.ServerHostKeyFingerprint);
+```
+
+This is what OpenSSH does with its `known_hosts` file.
+
+## Private keys
+A private key works in the format `ssh-keygen` writes today (OpenSSH's own, which starts with
+`-----BEGIN OPENSSH PRIVATE KEY-----`) and in the older PEM format. This is checked with ed25519, RSA
+and ECDSA keys, with and without a passphrase.
+
+Only if you are on an old version of this package that refuses an OpenSSH-format key, convert the key
+to PEM (use `""` for both passphrases if the key has none):
 ```bash
-ssh-keygen -p -f my_openssh_private_key.pem -m pem -P "" -N "" -O my_classic_private_key.pem
+ssh-keygen -p -f my_private_key -m pem -P "my passphrase" -N "my passphrase"
 ```

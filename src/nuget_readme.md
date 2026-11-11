@@ -17,10 +17,10 @@ Here is a sample example
 Com.H.Net.Ssh.SFtpClient sFtpClient = 
     new Com.H.Net.Ssh.SFtpClient("server_name_or_ip", 22, "user_id", "pwd");
 // or you can use the constructor with a private key instead of a password
-// new Com.H.Net.Ssh.SFtpClient("server_name_or_ip", 22, 
+// new Com.H.Net.Ssh.SFtpClient("server_name_or_ip", 22, "user_id",
 //    new Com.H.Net.Ssh.PrivateKeyFileSettings()
 //    {
-//        Path = @"C:\path\to\key.pem",
+//        Path = @"C:\path\to\private_key",
 //        Passphrase = "my passphrase" 
 //    });
 
@@ -53,13 +53,25 @@ sFtpClient.Rename("remote_folder/some_file.tmp",
     "remote_folder/some_file.txt");
 ```
 
-The private key should be of a classical format (not OpenSSH format). 
-If you happen to have an OpenSSH based private key, you can convert it to classical using the following command:
-```bash
-ssh-keygen -p -f my_openssh_private_key.pem -m pem -P "my passphrase" -N "my passphrase" -O my_classic_private_key.pem
+## Checking the server's host key
+This check is optional. Left unset, the client connects as it did in every earlier version.
+
+Unless you say which host key to expect, any server that answers at the address is accepted, and it
+receives your password and your files. Set `HostKeyFingerprint` and the client refuses any server that
+shows another key, before the login is sent:
+
+```c#
+var sFtpClient = new Com.H.Net.Ssh.SFtpClient("server_name_or_ip", 22, "user_id", "pwd")
+{
+    HostKeyFingerprint = "SHA256:DA04nSicK5AmDlNtTpfXp2RKDOpqCtEb3cXppB5Mfp8"
+};
 ```
 
-And if you don't have a passphrase, you can use the following command to convert your key:
-```bash
-ssh-keygen -p -f my_openssh_private_key.pem -m pem -P "" -N "" -O my_classic_private_key.pem
-```
+You don't need to know the fingerprint in advance. After a connection, `ServerHostKeyFingerprint`
+holds the fingerprint the server showed. Store it after the first connection and set
+`HostKeyFingerprint` to it from then on: the first connection accepts the server's key, and every
+later one is held to that same key.
+
+## Private keys
+A private key works in the format `ssh-keygen` writes today (OpenSSH's own) and in the older PEM
+format, with or without a passphrase.

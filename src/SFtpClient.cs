@@ -75,21 +75,92 @@ namespace Com.H.Net.Ssh
                             this.Port,
                             this.UId,
                             this.Pwd);
+                    c.HostKeyReceived += this.OnHostKeyReceived;
                 }
                 return c;
             }
         }
+
+        #region host key
+        /// <summary>
+        /// Optional. The fingerprint the server's host key must have, in the form <c>ssh-keygen -lf</c> and
+        /// OpenSSH's "The authenticity of host ..." prompt print it: "SHA256:" followed by the hash
+        /// in base 64 (the "SHA256:" prefix and the "=" padding may be left out).
+        /// When set, connecting to a server that shows any other host key throws an
+        /// <see cref="Renci.SshNet.Common.SshConnectionException"/> before the login is sent.
+        /// Default is null: any host key is accepted, which leaves the connection open to a server
+        /// that only claims to be the one you meant.
+        /// </summary>
+        public string HostKeyFingerprint { get; set; }
+
+        /// <summary>
+        /// The fingerprint ("SHA256:...") of the host key the server showed the last time this client
+        /// connected or tried to, or null if it has not tried yet. Store it after the first
+        /// connection to a server and set <see cref="HostKeyFingerprint"/> to it from then on, and
+        /// a later change of the server's key is caught.
+        /// </summary>
+        public string ServerHostKeyFingerprint { get; private set; }
+
+        private bool hostKeyRefused;
+
+        private void OnHostKeyReceived(object sender, Renci.SshNet.Common.HostKeyEventArgs e)
+        {
+            this.ServerHostKeyFingerprint = "SHA256:" + e.FingerPrintSHA256;
+            var expected = NormalizeFingerprint(this.HostKeyFingerprint);
+            if (expected == null) return;
+            if (!string.Equals(expected, NormalizeFingerprint(e.FingerPrintSHA256), StringComparison.Ordinal))
+            {
+                this.hostKeyRefused = true;
+                e.CanTrust = false;
+            }
+        }
+
+        private static string NormalizeFingerprint(string fingerprint)
+        {
+            if (string.IsNullOrWhiteSpace(fingerprint)) return null;
+            fingerprint = fingerprint.Trim();
+            if (fingerprint.StartsWith("SHA256:", StringComparison.OrdinalIgnoreCase))
+                fingerprint = fingerprint.Substring(7);
+            return fingerprint.TrimEnd('=');
+        }
+
+        // SSH.NET reports a refused host key as "Key exchange negotiation failed.", which says
+        // nothing of the cause.
+        private Exception HostKeyRefused(Exception inner)
+            => new Renci.SshNet.Common.SshConnectionException(
+                $"The server at {this.ServerAddress}:{this.Port} showed the host key {this.ServerHostKeyFingerprint}, " +
+                $"where SHA256:{NormalizeFingerprint(this.HostKeyFingerprint)} was expected. The connection was refused.",
+                Renci.SshNet.Messages.Transport.DisconnectReason.HostKeyNotVerifiable,
+                inner);
+        #endregion
+
         private bool AutoConnect()
         {
             if (this.Client.IsConnected) return false;
-            this.Client.Connect();
+            this.hostKeyRefused = false;
+            try
+            {
+                this.Client.Connect();
+            }
+            catch (Exception ex) when (this.hostKeyRefused)
+            {
+                throw this.HostKeyRefused(ex);
+            }
             return true;
         }
-        
+
         private async Task<bool> AutoConnectAsync(CancellationToken cancellationToken = default)
         {
             if (this.Client.IsConnected) return false;
-            await this.Client.ConnectAsync(cancellationToken);
+            this.hostKeyRefused = false;
+            try
+            {
+                await this.Client.ConnectAsync(cancellationToken);
+            }
+            catch (Exception ex) when (this.hostKeyRefused)
+            {
+                throw this.HostKeyRefused(ex);
+            }
             return true;
         }
         /// <summary>
@@ -653,12 +724,75 @@ namespace Com.H.Net.Ssh
         }
         #endregion
 
+        #region folders above an upload
+        /// <summary>
+        /// The folders above a remote file, outermost first, each as its full path:
+        /// "a/b/c.txt" gives "a/" and "a/b/".
+        /// </summary>
+        private static List<string> FoldersAbove(string remotePath)
+        {
+            var folders = new List<string>();
+            string path = "";
+            foreach (Match folder in Regex.Matches(remotePath, SFtpClient.FolderSplitterRegex))
+                folders.Add(path += folder.Value.Replace("\\", "/"));
+            return folders;
+        }
+
+        /// <summary>
+        /// Creates the folders above a remote file that don't exist yet. It looks from the file's own
+        /// folder upwards and stops at the first one that exists, so an upload into a folder that is
+        /// already there costs one request, whatever the depth. (Until 10.3.0 every folder was
+        /// checked from the top on every upload, one request each.)
+        /// </summary>
+        private void CreateFoldersAbove(string remotePath)
+        {
+            var folders = FoldersAbove(remotePath);
+            int firstMissing = folders.Count;
+            while (firstMissing > 0 && !this.Client.Exists(folders[firstMissing - 1]))
+                firstMissing--;
+
+            for (int i = firstMissing; i < folders.Count; i++)
+            {
+                try
+                {
+                    this.Client.CreateDirectory(folders[i]);
+                }
+                // Created meanwhile by another client, as two uploads into one new folder do.
+                catch (Renci.SshNet.Common.SshException) when (this.Client.Exists(folders[i]))
+                {
+                }
+            }
+        }
+
+        private async Task CreateFoldersAboveAsync(string remotePath, CancellationToken cancellationToken)
+        {
+            var folders = FoldersAbove(remotePath);
+            int firstMissing = folders.Count;
+            while (firstMissing > 0 && !await this.Client.ExistsAsync(folders[firstMissing - 1], cancellationToken))
+                firstMissing--;
+
+            for (int i = firstMissing; i < folders.Count; i++)
+            {
+                try
+                {
+                    await this.Client.CreateDirectoryAsync(folders[i], cancellationToken);
+                }
+                catch (Renci.SshNet.Common.SshException)
+                {
+                    // Created meanwhile by another client, as two uploads into one new folder do.
+                    if (!await this.Client.ExistsAsync(folders[i], cancellationToken))
+                        throw;
+                }
+            }
+        }
+        #endregion
+
         #region upload
         public void Upload(
-            string localPath, 
+            string localPath,
             string remotePath,
             Func<string, string> preProcess = null
-            ) => 
+            ) =>
         this.UploadInternal(
             localPath, 
             remotePath, 
@@ -732,25 +866,7 @@ namespace Com.H.Net.Ssh
             {
                 if (input == null) throw new ArgumentNullException(nameof(input));
                 this.AutoConnect();
-                var folders = Regex.Matches(remotePath, SFtpClient.FolderSplitterRegex)
-                    .Cast<Match>().Select(x => x.Value)
-                    .Select(x => x.Replace("\\", "/")).ToList();
-                string folder_to_create = "";
-                foreach (var folder in folders)
-                {
-                    folder_to_create += folder;
-                    if (!this.Client.Exists(folder_to_create))
-                    {
-                        try
-                        {
-                            this.Client.CreateDirectory(folder_to_create);
-                        }
-                        // Created meanwhile by another client, as two uploads into one new folder do.
-                        catch (Renci.SshNet.Common.SshException) when (this.Client.Exists(folder_to_create))
-                        {
-                        }
-                    }
-                }
+                this.CreateFoldersAbove(remotePath);
                 if (preProcess != null)
                 {
                     using (var temp = File.OpenWrite(tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.tmp")))
@@ -902,27 +1018,7 @@ namespace Com.H.Net.Ssh
             {
                 if (input == null) throw new ArgumentNullException(nameof(input));
                 await this.AutoConnectAsync(cancellationToken);
-                var folders = Regex.Matches(remotePath, SFtpClient.FolderSplitterRegex)
-                    .Cast<Match>().Select(x => x.Value)
-                    .Select(x => x.Replace("\\", "/")).ToList();
-                string folder_to_create = "";
-                foreach (var folder in folders)
-                {
-                    folder_to_create += folder;
-                    if (!await this.Client.ExistsAsync(folder_to_create, cancellationToken))
-                    {
-                        try
-                        {
-                            await this.Client.CreateDirectoryAsync(folder_to_create, cancellationToken);
-                        }
-                        catch (Renci.SshNet.Common.SshException)
-                        {
-                            // Created meanwhile by another client, as two uploads into one new folder do.
-                            if (!await this.Client.ExistsAsync(folder_to_create, cancellationToken))
-                                throw;
-                        }
-                    }
-                }
+                await this.CreateFoldersAboveAsync(remotePath, cancellationToken);
                 if (preProcess != null)
                 {
                     // FileStream is not IAsyncDisposable on netstandard2.0; its synchronous Dispose
@@ -999,6 +1095,7 @@ namespace Com.H.Net.Ssh
                         FullPath = fileInfo.FullName,
                         IsDirectory = fileInfo.IsDirectory,
                         LastModified = fileInfo.LastWriteTime,
+                        Size = fileInfo.Length,
                     });
                 }
                 return list;
@@ -1030,6 +1127,7 @@ namespace Com.H.Net.Ssh
                     FullPath = fileInfo.FullName,
                     IsDirectory = fileInfo.IsDirectory,
                     LastModified = fileInfo.LastWriteTime,
+                    Size = fileInfo.Length,
                 };
             }
             catch
@@ -1087,6 +1185,7 @@ namespace Com.H.Net.Ssh
                         FullPath = fileInfo.FullName,
                         IsDirectory = fileInfo.IsDirectory,
                         LastModified = fileInfo.LastWriteTime,
+                        Size = fileInfo.Length,
                     };
                 }
             }
@@ -1123,6 +1222,7 @@ namespace Com.H.Net.Ssh
                     FullPath = fileInfo.FullName,
                     IsDirectory = fileInfo.IsDirectory,
                     LastModified = fileInfo.LastWriteTime,
+                    Size = fileInfo.Length,
                 };
             }
             catch
