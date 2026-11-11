@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net8.0;net9.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net8.0;net9.0;net10.0;net11.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <PackageId>Com.H.Net.Ssh</PackageId>
     <AssemblyName>Com.H.Net.Ssh</AssemblyName>
@@ -16,12 +16,17 @@ Includes full async/await support on every target, including .NET Standard 2.0 (
     <RepositoryUrl>https://github.com/H7O/Com.H.Net.Ssh</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>SFTP;Async;SSH</PackageTags>
-    <PackageReleaseNotes>10.3.0
+    <PackageReleaseNotes>11.0.0
 
-* New: SFtpClient.HostKeyFingerprint. Set it to the server's host key fingerprint ("SHA256:...")
-  and the client refuses a server that shows another key, before the login is sent, with an
-  SshConnectionException that names both fingerprints. Left unset, any host key is accepted, as
-  before. SFtpClient.ServerHostKeyFingerprint holds the fingerprint the server showed.
+* New: a net11.0 build, for .NET 11. The netstandard2.0, net8.0, net9.0 and net10.0 builds stay,
+  so nothing changes for a project on an earlier .NET. The major version is 11 because it follows
+  the .NET generation. Nothing was removed or renamed: code that builds against 10.2.1 builds
+  against 11.0.0 as it is.
+* New: SFtpClient.HostKeyFingerprint, which is optional. Set it to the server's host key
+  fingerprint ("SHA256:...") and the client refuses a server that shows another key, before the
+  login is sent, with an SshConnectionException that names both fingerprints. Left unset, any host
+  key is accepted, as before. SFtpClient.ServerHostKeyFingerprint holds the fingerprint the server
+  showed, so a caller can trust a server on the first connection and hold it to that key afterwards.
 * Fixed: SFtpFileInfo.Size was always zero. ListFiles, GetFileInfo and their async versions now
   fill it in.
 * Faster: an upload into a folder that exists asks the server about that folder only, one request
@@ -39,12 +44,12 @@ https://www.nuget.org/packages/Com.H.Net.Ssh/10.2.0#releasenotes-body-tab
 Upgrading from 10.0.x or 2.x? 10.1.0 merged the netstandard2.0 and net8.0+ packages into one and
 raised the dependency floors (including SSH.NET 2026.0.0). Its notes list every change:
 https://www.nuget.org/packages/Com.H.Net.Ssh/10.1.0#releasenotes-body-tab</PackageReleaseNotes>
-    <AssemblyVersion>10.3.0.0</AssemblyVersion>
-    <FileVersion>10.3.0.0</FileVersion>
+    <AssemblyVersion>11.0.0.0</AssemblyVersion>
+    <FileVersion>11.0.0.0</FileVersion>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <RootNamespace>Com.H.Net.Ssh</RootNamespace>
-    <Version>10.3.0</Version>
+    <Version>11.0.0</Version>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
     <!-- Deterministic builds for reproducibility -->

@@ -7,7 +7,7 @@ One package covers legacy and modern targets:
 | Target | Runs on |
 | --- | --- |
 | `netstandard2.0` | .NET Framework 4.6.2+, Mono, Xamarin, and anything else that consumes .NET Standard 2.0 |
-| `net8.0` / `net9.0` / `net10.0` | .NET 8, 9 and 10 |
+| `net8.0` / `net9.0` / `net10.0` / `net11.0` | .NET 8, 9, 10 and 11 |
 
 Every target exposes the same API, sync and async alike. On `netstandard2.0` the async surface is
 backed by the `Microsoft.Bcl.AsyncInterfaces` package, which NuGet pulls in automatically; the modern
@@ -90,7 +90,7 @@ plain `using` plus an explicit `await client.DisposeAsync()` works otherwise.
 
 ## File sizes
 `ListFiles` and `GetFileInfo` (and their async versions) fill in each entry's `Size` in bytes, from
-version 10.3.0 on. Before that it was always zero.
+version 11.0.0 on. Before that it was always zero.
 
 ```c#
 foreach (var f in await sFtpClient.ListFilesAsync("remote_folder/", token))
@@ -98,7 +98,7 @@ foreach (var f in await sFtpClient.ListFilesAsync("remote_folder/", token))
 ```
 
 ## Checking the server's host key
-This check is optional. Leave `HostKeyFingerprint` unset and the client connects as it did in every
+This check is new in version 11.0.0, and it is optional. Leave `HostKeyFingerprint` unset and the client connects as it did in every
 earlier version, whatever key the server shows. Nothing has to be looked up before a first login.
 
 An SSH server proves who it is with its host key. Unless you say which key to expect, any server

@@ -741,7 +741,7 @@ namespace Com.H.Net.Ssh
         /// <summary>
         /// Creates the folders above a remote file that don't exist yet. It looks from the file's own
         /// folder upwards and stops at the first one that exists, so an upload into a folder that is
-        /// already there costs one request, whatever the depth. (Until 10.3.0 every folder was
+        /// already there costs one request, whatever the depth. (Until 11.0.0 every folder was
         /// checked from the top on every upload, one request each.)
         /// </summary>
         private void CreateFoldersAbove(string remotePath)

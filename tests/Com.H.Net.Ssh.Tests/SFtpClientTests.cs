@@ -53,7 +53,7 @@ public class SFtpClientTests(SftpServer server) : IClassFixture<SftpServer>
             else client.Upload(Text("two"), $"/{folder}/a/b/c/two.txt");
         });
 
-        // One question, whatever the depth. Before 10.3.0 it was one for each of the four folders.
+        // One question, whatever the depth. Before 11.0.0 it was one for each of the four folders.
         Assert.Equal([$"/{folder}/a/b/c"], Requests(log, "stat"));
         Assert.Empty(Requests(log, "mkdir"));
         Assert.Equal("two", File.ReadAllText(server.OnDisk($"{folder}/a/b/c/two.txt")));

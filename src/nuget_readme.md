@@ -1,7 +1,7 @@
 # Com.H.Net.Ssh
 Wrapper to Renci.SshNet. Introduces minor new functionality (e.g. SFTP upload / download folders & subfolders, etc..)
 
-Targets `netstandard2.0` (.NET Framework 4.6.2+), `net8.0`, `net9.0` and `net10.0` from one package,
+Targets `netstandard2.0` (.NET Framework 4.6.2+), `net8.0`, `net9.0`, `net10.0` and `net11.0` from one package,
 with the same sync and async API on every one of them.
 
 Kindly visit the project's github page for documentation [https://github.com/H7O/Com.H.Net.Ssh](https://github.com/H7O/Com.H.Net.Ssh)
